@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台大醫院醫學研究部 ─ 演講管理系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   Design: Warm editorial, cream & terracotta
+   ═══════════════════════════════════════════ */
+:root {
+  --cream:    #faf7f2;
+  --sand:     #f0ebe1;
+  --warm100:  #e8e0d4;
+  --warm200:  #d4c9b8;
+  --warm300:  #b5a895;
+  --ink:      #2c2520;
+  --ink60:    #6b5f54;
+  --ink40:    #9a8e82;
+  --ink20:    #c4bbb0;
+  --terra:    #c45d3e;
+  --terra-l:  #f4e6e0;
+  --teal:     #2a7a6d;
+  --teal-l:   #e0f0ec;
+  --plum:     #7b4b8a;
+  --plum-l:   #f0e4f4;
+  --amber:    #b8860b;
+  --amber-l:  #fdf5e0;
+  --blue:     #3a6ea5;
+  --blue-l:   #e4edf6;
+  --sky:      #1a8b9a;
+  --radius:   10px;
+  --shadow-sm: 0 1px 3px rgba(44,37,32,0.06);
+  --shadow-md: 0 4px 16px rgba(44,37,32,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans TC', 'Outfit', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  background: #fff;
+  border-bottom: 1px solid var(--warm100);
+  padding: 14px 24px;
+  position: sticky; top: 0; z-index: 90;
+  box-shadow: var(--shadow-sm);
+}
+.header-inner { max-width: 1240px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.logo { font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+.logo em { font-style: normal; color: var(--terra); }
+.logo small { display: block; font-size: 11px; font-weight: 400; color: var(--ink40); letter-spacing: 0.02em; margin-top: 1px; }
+.nav { display: flex; gap: 5px; flex-wrap: wrap; }
+.nav-btn {
+  padding: 7px 16px; border-radius: 8px; border: 1px solid var(--warm100);
+  background: #fff; color: var(--ink60); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.nav-btn:hover { background: var(--sand); }
+.nav-btn.active { background: var(--terra); color: #fff; border-color: var(--terra); }
+.nav-btn.settings { border-color: var(--amber); color: var(--amber); background: var(--amber-l); }
+.nav-btn.settings:hover { background: var(--amber); color: #fff; }
+.nav-btn.public {
+  text-decoration: none; border-color: var(--teal); color: var(--teal); background: var(--teal-l);
+  display: inline-flex; align-items: center;
+}
+.nav-btn.public:hover { background: var(--teal); color: #fff; }
+
+/* ── Layout ── */
+.main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 40px; }
+
+/* ── Cards ── */
+.card { background: #fff; border: 1px solid var(--warm100); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+
+/* ── Filters ── */
+.filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-input, .filter-select {
+  padding: 8px 12px; border: 1px solid var(--warm200); border-radius: 8px;
+  font-size: 13px; color: var(--ink); background: #fff; outline: none;
+  font-family: inherit; transition: border-color 0.15s;
+}
+.filter-input:focus, .filter-select:focus { border-color: var(--terra); }
+.filter-input { width: 240px; }
+.filter-select { min-width: 110px; cursor: pointer; }
+.filter-count { margin-left: auto; font-size: 12px; color: var(--ink40); }
+.filter-count b { color: var(--ink); }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600;
+  color: var(--ink40); text-transform: uppercase; letter-spacing: 0.04em;
+  background: var(--sand); border-bottom: 2px solid var(--warm100);
+  white-space: nowrap; position: sticky; top: 0;
+}
+tbody td {
+  padding: 9px 12px; border-bottom: 1px solid var(--sand);
+  vertical-align: middle;
+}
+tbody tr { transition: background 0.1s; }
+tbody tr:hover { background: var(--sand); }
+.cell-date { white-space: nowrap; color: var(--ink40); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cell-title { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: var(--ink); }
+.cell-speaker { color: var(--ink60); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-unit { color: var(--ink40); font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-intl { font-size: 12px; font-weight: 600; }
+.cell-intl.intl { color: var(--blue); }
+.cell-intl.domestic { color: var(--teal); }
+.cell-loc { color: var(--ink40); font-size: 12px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cell-num.empty { color: var(--ink20); font-weight: 400; }
+.cell-actions { white-space: nowrap; }
+.act-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 3px 5px; border-radius: 4px; transition: background 0.15s; }
+.act-btn:hover { background: var(--sand); }
+.act-btn.del:hover { background: #fde8e8; }
+
+/* ── Badge ── */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap;
+}
+.type-tag { font-size: 12px; white-space: nowrap; }
+
+/* ── Form ── */
+.form-card { padding: 28px; max-width: 720px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--ink60); margin-bottom: 5px; }
+.form-input, .form-select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--warm200);
+  border-radius: 8px; font-size: 13px; color: var(--ink); background: #fff;
+  font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--terra); box-shadow: 0 0 0 3px var(--terra-l); }
+.form-actions { display: flex; gap: 10px; margin-top: 24px; }
+.btn-primary {
+  padding: 10px 28px; background: var(--terra); color: #fff; border: none;
+  border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: background 0.15s;
+}
+.btn-primary:hover { background: #a94e33; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  padding: 10px 28px; background: #fff; color: var(--ink60); border: 1px solid var(--warm200);
+  border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;
+}
+.btn-secondary:hover { background: var(--sand); }
+
+/* ── Report ── */
+.stat-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-card {
+  background: #fff; border: 1px solid var(--warm100); border-radius: var(--radius);
+  padding: 16px 20px; flex: 1 1 0; min-width: 140px; box-shadow: var(--shadow-sm);
+}
+.stat-label { font-size: 11px; color: var(--ink40); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.stat-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-sub { font-size: 11px; color: var(--ink40); margin-top: 2px; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-card { padding: 20px; }
+.chart-card h3 { font-size: 14px; font-weight: 600; color: var(--ink60); margin: 0 0 14px; }
+.chart-full { grid-column: 1 / -1; }
+
+/* Bar chart */
+.hbar { display: flex; flex-direction: column; gap: 6px; }
+.hbar-row { display: flex; align-items: center; gap: 10px; }
+.hbar-label { width: 100px; font-size: 12px; color: var(--ink60); text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar-track { flex: 1; max-width: 300px; height: 22px; background: var(--sand); border-radius: 6px; overflow: hidden; }
+.hbar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; min-width: 3px; }
+.hbar-val { width: 30px; font-size: 12px; font-weight: 700; color: var(--ink); }
+
+/* Cross table */
+.cross-table { overflow-x: auto; margin-top: 16px; }
+.cross-table table { font-size: 12px; }
+.cross-table th, .cross-table td { padding: 8px 12px; }
+.cross-table th { background: var(--sand); }
+.cross-cell { text-align: center; }
+.cross-cell.zero { color: var(--ink20); }
+.cross-total { text-align: center; font-weight: 700; color: var(--terra); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(44,37,32,0.25); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal {
+  background: #fff; border-radius: 16px; padding: 28px 32px; width: 620px;
+  max-width: 100%; max-height: 85vh; overflow: auto; box-shadow: 0 20px 60px rgba(44,37,32,0.15);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.modal-header h2 { font-size: 18px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink40); line-height: 1; }
+.modal-section { margin-bottom: 24px; }
+.modal-section h3 { font-size: 14px; font-weight: 600; color: var(--ink60); margin-bottom: 12px; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-item {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+  border-radius: 8px; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--warm100); background: var(--sand); color: var(--ink);
+}
+.tag-item input {
+  border: none; background: transparent; font-size: 13px; width: 80px;
+  outline: none; color: var(--ink); font-family: inherit;
+}
+.tag-btn { background: none; border: none; cursor: pointer; font-size: 12px; padding: 2px; line-height: 1; color: var(--ink40); }
+.tag-btn.save { color: var(--teal); }
+.tag-btn.del { color: #dc3545; }
+.add-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-input {
+  flex: 1; padding: 8px 12px; border: 1px solid var(--warm200); border-radius: 8px;
+  font-size: 13px; outline: none; color: var(--ink); background: #fff; font-family: inherit;
+}
+.add-btn {
+  padding: 8px 16px; background: var(--terra); color: #fff; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.modal-tip {
+  margin-top: 20px; padding: 12px 16px; background: var(--amber-l);
+  border: 1px solid #f0d68a; border-radius: var(--radius); font-size: 12px; color: #78600a;
+}
+
+/* ── Loading / status ── */
+.status-bar {
+  padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  margin-bottom: 16px; display: none;
+}
+.status-bar.show { display: block; }
+.status-bar.info { background: var(--blue-l); color: var(--blue); }
+.status-bar.success { background: var(--teal-l); color: var(--teal); }
+.status-bar.error { background: var(--terra-l); color: var(--terra); }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--ink20); border-top-color: var(--terra); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-msg { text-align: center; padding: 40px; color: var(--ink40); }
+.section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+/* ── Batch operations ── */
+.batch-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; margin-bottom: 12px;
+  background: var(--amber-l); border: 1px solid #f0d68a;
+  border-radius: var(--radius);
+}
+.batch-info { font-size: 13px; color: #78600a; font-weight: 500; }
+.batch-info b { color: var(--ink); }
+.batch-btn {
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
+}
+.batch-edit { background: var(--terra); color: #fff; }
+.batch-edit:hover { background: #a94e33; }
+.batch-del { background: #fff; color: #dc3545; border: 1px solid #f5c6cb; }
+.batch-del:hover { background: #fde8e8; }
+.batch-cancel { background: transparent; color: var(--ink40); border: 1px solid var(--warm200); }
+.batch-cancel:hover { background: var(--sand); }
+.row-cb { width: 15px; height: 15px; cursor: pointer; accent-color: var(--terra); }
+thead .row-cb { accent-color: var(--terra); }
+tr.selected { background: var(--amber-l) !important; }
+
+/* Batch edit modal fields */
+.batch-field { display: flex; align-items: center; gap: 12px; }
+.batch-field .form-select, .batch-field .form-input { flex: 1; }
+.batch-check {
+  display: flex; align-items: center; gap: 6px;
+  min-width: 100px; font-size: 13px; font-weight: 500; color: var(--ink60); cursor: pointer;
+}
+.batch-check input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--terra); cursor: pointer; }
+.batch-check span { user-select: none; }
+
+/* ── Tools grid ── */
+.tools-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.tool-card {
+  display: flex; align-items: center; gap: 16px;
+  background: #fff; border: 1px solid var(--warm100); border-radius: var(--radius);
+  padding: 20px 24px; text-decoration: none; color: var(--ink);
+  box-shadow: var(--shadow-sm); transition: all 0.2s; cursor: pointer;
+}
+.tool-card:hover {
+  border-color: var(--terra); box-shadow: 0 4px 16px rgba(196,93,62,0.1);
+  transform: translateY(-2px);
+}
+.tool-icon { font-size: 32px; flex-shrink: 0; }
+.tool-info { flex: 1; }
+.tool-name { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.tool-desc { font-size: 12px; color: var(--ink40); line-height: 1.5; }
+.tool-arrow { font-size: 20px; color: var(--ink20); transition: color 0.15s; flex-shrink: 0; }
+.tool-card:hover .tool-arrow { color: var(--terra); }
+
+/* ── Export button ── */
+.btn-export {
+  padding: 7px 16px; border-radius: 8px; border: 1px solid var(--teal);
+  background: var(--teal-l); color: var(--teal); font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.btn-export:hover { background: var(--teal); color: #fff; }
+
+/* ── Footer ── */
+.site-footer {
+  margin-top: 48px; padding: 24px 28px;
+  border-top: 1px solid var(--warm100);
+  text-align: center; font-size: 12px; color: var(--ink40);
+  line-height: 1.8;
+}
+.site-footer .credit { color: var(--ink60); font-weight: 500; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .tools-grid { grid-template-columns: 1fr; }
+  .stat-row { flex-direction: column; }
+  .filter-input { width: 100%; }
+  .header-inner { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      台大醫院醫學研究部 <em>演講管理系統</em>
+      <small>Lecture Management System ・ <span id="totalCount">載入中...</span></small>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="list" onclick="switchView('list')">📋 演講列表</button>
+      <button class="nav-btn" data-view="form" onclick="switchView('form'); resetForm();">➕ 新增建檔</button>
+      <button class="nav-btn" data-view="report" onclick="switchView('report')">📊 統計報表</button>
+      <button class="nav-btn" data-view="tools" onclick="switchView('tools')">🛠️ 演講工具</button>
+      <button class="nav-btn settings" onclick="openSettings()">⚙️ 管理分類</button>
+      <a class="nav-btn public" href="https://medresearchntuh.github.io/ntuhmedspeechInfo/" target="_blank" rel="noopener">🌐 公開演講網頁</a>
+    </nav>
+  </div>
+</header>
+
+<div class="main">
+  <div id="statusBar" class="status-bar"></div>
+
+  <!-- ═══════ LIST VIEW ═══════ -->
+  <div id="view-list">
+    <div class="filters">
+      <input class="filter-input" id="searchInput" placeholder="🔍 搜尋講題、講師、單位..." oninput="renderTable()">
+      <select class="filter-select" id="filterYear" onchange="renderTable()"><option value="">全部年分</option></select>
+      <select class="filter-select" id="filterCat" onchange="renderTable()"><option value="">全部大類</option></select>
+      <select class="filter-select" id="filterType" onchange="renderTable()"><option value="">全部類型</option></select>
+      <button class="btn-export" onclick="exportListExcel()">📥 匯出 Excel</button>
+      <div class="filter-count">篩選結果：<b id="filteredCount">0</b> 筆</div>
+    </div>
+
+    <!-- Batch toolbar -->
+    <div class="batch-bar" id="batchBar" style="display:none;">
+      <div class="batch-info">已選取 <b id="batchCount">0</b> 筆</div>
+      <button class="batch-btn batch-edit" onclick="openBatchEdit()">✏️ 批次修改</button>
+      <button class="batch-btn batch-del" onclick="batchDelete()">🗑️ 批次刪除</button>
+      <button class="batch-btn batch-cancel" onclick="clearSelection()">✕ 取消選取</button>
+    </div>
+
+    <div class="card table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" title="全選"></th>
+            <th>日期</th><th>大類</th><th>類型</th><th>講題</th>
+            <th>講師</th><th>單位</th><th>國際</th><th>地點</th><th>人數</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-msg" id="emptyMsg" style="display:none;">無符合條件的紀錄</div>
+    </div>
+  </div>
+
+  <!-- ═══════ FORM VIEW ═══════ -->
+  <div id="view-form" style="display:none;">
+    <h2 class="section-title" id="formTitle">➕ 新增演講建檔</h2>
+    <div class="card form-card">
+      <div class="form-grid">
+        <div>
+          <label class="form-label">日期與時間 *</label>
+          <input type="datetime-local" class="form-input" id="f-datetime">
+        </div>
+        <div>
+          <label class="form-label">年分（自動帶入）</label>
+          <input type="number" class="form-input" id="f-year" placeholder="自動依日期填入">
+        </div>
+        <div>
+          <label class="form-label">大類 *</label>
+          <select class="form-select" id="f-category"></select>
+        </div>
+        <div>
+          <label class="form-label">類型 *</label>
+          <select class="form-select" id="f-type"></select>
+        </div>
+        <div class="full">
+          <label class="form-label">講題 *</label>
+          <input type="text" class="form-input" id="f-title" placeholder="例：[論文] 學術論文寫作技巧">
+        </div>
+        <div>
+          <label class="form-label">講師</label>
+          <input type="text" class="form-input" id="f-speaker">
+        </div>
+        <div>
+          <label class="form-label">講師單位</label>
+          <input type="text" class="form-input" id="f-unit">
+        </div>
+        <div>
+          <label class="form-label">國際/國內</label>
+          <select class="form-select" id="f-intl">
+            <option value="">（未標註）</option>
+            <option value="國內">國內</option>
+            <option value="國際">國際</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">地點</label>
+          <input type="text" class="form-input" id="f-location" list="loc-list" placeholder="輸入或選擇地點">
+          <datalist id="loc-list"></datalist>
+        </div>
+        <div>
+          <label class="form-label">報名參加人數</label>
+          <input type="number" class="form-input" id="f-attendees" placeholder="（選填）">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" id="saveBtn" onclick="saveRecord()">✅ 新增建檔</button>
+        <button class="btn-secondary" onclick="switchView('list')">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ REPORT VIEW ═══════ -->
+  <div id="view-report" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+      <h2 class="section-title" style="margin-bottom:0;">📊 統計報表</h2>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn-export" onclick="exportReportExcel()">📥 匯出報表 Excel</button>
+        <select class="filter-select" id="reportYear" onchange="renderReport()"><option value="">所有年度</option></select>
+      </div>
+    </div>
+    <div class="stat-row" id="statCards"></div>
+    <div class="charts-grid" id="chartsGrid"></div>
+    <div id="crossTableArea"></div>
+  </div>
+
+  <!-- ═══════ TOOLS VIEW ═══════ -->
+  <div id="view-tools" style="display:none;">
+    <div class="tools-intro">
+      <h2 class="section-title">🛠️ 演講文件工具</h2>
+      <p style="font-size:13px; color:var(--ink40); margin:-14px 0 16px;">公告產生、會後紀錄、簽到表、桌牌列印 — 點擊下方卡片開啟工具頁面</p>
+    </div>
+    <div class="tools-grid">
+      <a class="tool-card" href="tools.html" target="_blank">
+        <div class="tool-icon">📢</div>
+        <div class="tool-info">
+          <div class="tool-name">演講公告</div>
+          <div class="tool-desc">自動產生公告文件、純文字、學員/講師提醒信</div>
+        </div>
+        <div class="tool-arrow">→</div>
+      </a>
+      <a class="tool-card" href="tools.html" target="_blank">
+        <div class="tool-icon">📝</div>
+        <div class="tool-info">
+          <div class="tool-name">會後紀錄</div>
+          <div class="tool-desc">快速產生格式化的會後紀錄文件</div>
+        </div>
+        <div class="tool-arrow">→</div>
+      </a>
+      <a class="tool-card" href="tools.html" target="_blank">
+        <div class="tool-icon">✍️</div>
+        <div class="tool-info">
+          <div class="tool-name">簽到表</div>
+          <div class="tool-desc">管理出席名單、列印簽到表、匯出 Excel/CSV</div>
+        </div>
+        <div class="tool-arrow">→</div>
+      </a>
+      <a class="tool-card" href="tools.html" target="_blank">
+        <div class="tool-icon">🪧</div>
+        <div class="tool-info">
+          <div class="tool-name">桌牌列印</div>
+          <div class="tool-desc">自訂樣式的雙面摺疊桌牌，支援批次列印</div>
+        </div>
+        <div class="tool-arrow">→</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer class="site-footer">
+  <div>© 2026 台大醫院 醫學研究部 All rights reserved.</div>
+  <div class="credit">系統建置：醫學研究部 陳巧瑜管理師</div>
+</footer>
+<!-- ═══════ BATCH EDIT MODAL ═══════ -->
+<div class="modal-overlay" id="batchModal" style="display:none;" onclick="closeBatchEdit()">
+  <div class="modal" onclick="event.stopPropagation()" style="width:540px;">
+    <div class="modal-header">
+      <h2>✏️ 批次修改 <span id="batchEditCount" style="font-size:14px;color:var(--ink40);font-weight:400;"></span></h2>
+      <button class="modal-close" onclick="closeBatchEdit()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--ink40);margin-bottom:18px;">僅勾選的欄位會被修改，未勾選的欄位維持原值不變。</p>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="batch-field">
+        <label class="batch-check"><input type="checkbox" id="bc-category"><span>大類</span></label>
+        <select class="form-select" id="bf-category" disabled></select>
+      </div>
+      <div class="batch-field">
+        <label class="batch-check"><input type="checkbox" id="bc-type"><span>類型</span></label>
+        <select class="form-select" id="bf-type" disabled></select>
+      </div>
+      <div class="batch-field">
+        <label class="batch-check"><input type="checkbox" id="bc-intl"><span>國際/國內</span></label>
+        <select class="form-select" id="bf-intl" disabled>
+          <option value="">（未標註）</option>
+          <option value="國內">國內</option>
+          <option value="國際">國際</option>
+        </select>
+      </div>
+      <div class="batch-field">
+        <label class="batch-check"><input type="checkbox" id="bc-location"><span>地點</span></label>
+        <input type="text" class="form-input" id="bf-location" list="loc-list" placeholder="輸入或選擇地點" disabled>
+      </div>
+      <div class="batch-field">
+        <label class="batch-check"><input type="checkbox" id="bc-unit"><span>講師單位</span></label>
+        <input type="text" class="form-input" id="bf-unit" placeholder="統一修改講師單位" disabled>
+      </div>
+      <div class="batch-field">
+        <label class="batch-check"><input type="checkbox" id="bc-year"><span>年分</span></label>
+        <input type="number" class="form-input" id="bf-year" placeholder="統一修改年分" disabled>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <button class="btn-primary" onclick="executeBatchEdit()">💾 套用修改</button>
+      <button class="btn-secondary" onclick="closeBatchEdit()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModal" style="display:none;" onclick="closeSettings()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2>⚙️ 管理大類 / 類型</h2>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-section">
+      <h3>大類（Category）</h3>
+      <div class="tag-list" id="catTags"></div>
+      <div class="add-row">
+        <input class="add-input" id="newCatInput" placeholder="輸入新大類名稱..." onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="add-btn" onclick="addCategory()">+ 新增</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>類型（Type）</h3>
+      <div class="tag-list" id="typeTags"></div>
+      <div class="add-row">
+        <input class="add-input" id="newTypeInput" placeholder="輸入新類型名稱..." onkeydown="if(event.key==='Enter')addType()">
+        <button class="add-btn" onclick="addType()">+ 新增</button>
+      </div>
+    </div>
+    <div class="modal-tip">
+      💡 修改後請點選「儲存至 Google Sheet」同步。修改名稱不會自動更新已建檔的演講紀錄。
+    </div>
+    <div style="margin-top:16px; display:flex; gap:10px;">
+      <button class="btn-primary" onclick="saveSettings()">💾 儲存至 Google Sheet</button>
+      <button class="btn-secondary" onclick="closeSettings()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  ⚠️ 在此處貼上你的 Apps Script 部署 URL
+// ═══════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZkIpVi89hzB96R2eZWCNhT2UXYPm-9ra_oZ3JT0Bz7DNPjDFXeuhhWNSIagqz9TbtHg/exec';
+
+// ── State ──
+let records = [];
+let categories = [];
+let types = [];
+let editingRowIndex = null;
+let locations = ['第七講堂','醫學院101講堂','醫學院102講堂','醫學院103講堂','醫學院202講堂','醫學院202+線上','醫學院301','線上','線上+醫學院202講堂','兒醫B1講堂+線上','第五會議室+線上','西址第七講堂','臺大醫院國際會議中心'];
+
+const CAT_COLORS = {
+  '論文講座':'#3a6ea5','經驗分享':'#9333ea','研究群':'#2a7a6d',
+  '交流講座':'#b8860b','升等講座':'#7b4b8a','支援講座':'#1a8b9a'
+};
+const TYPE_EMOJI = {
+  '論文':'📝','經驗':'💡','神經':'🧠','再生':'🧬','模式':'🐟','微菌':'🦠',
+  '大師':'🏆','學術':'🎓','生科':'🔬','生資':'💻','交流':'🤝','升等':'📈',
+  '尖端':'🚀','協辦':'🤲','研究週':'📅','資料庫':'🗄️','再生+神經':'🧬'
+};
+const CHART_COLORS = ['#c45d3e','#2a7a6d','#3a6ea5','#b8860b','#7b4b8a','#1a8b9a'];
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+  showStatus('info', '<span class="spinner"></span> 正在從 Google Sheet 載入資料...');
+  try {
+    const res = await fetch(API_URL + '?action=getAll');
+    const json = await res.json();
+    if (json.success) {
+      records = json.records || [];
+      categories = json.categories && json.categories.length > 0
+        ? json.categories
+        : ['論文講座','經驗分享','研究群','交流講座','升等講座','支援講座'];
+      types = json.types && json.types.length > 0
+        ? json.types
+        : ['論文','經驗','神經','再生','模式','微菌','大師','學術','生科','生資','交流','升等','尖端','協辦','研究週','資料庫','再生+神經'];
+      
+      // Merge locations from data
+      records.forEach(r => { if (r.location && !locations.includes(r.location)) locations.push(r.location); });
+      
+      hideStatus();
+      refreshAll();
+    } else {
+      showStatus('error', '載入失敗：' + (json.error || '未知錯誤'));
+    }
+  } catch (e) {
+    showStatus('error', '無法連線至 Google Sheet。請確認 API_URL 已設定。目前以離線模式運作。');
+    // Fallback: use defaults
+    categories = ['論文講座','經驗分享','研究群','交流講座','升等講座','支援講座'];
+    types = ['論文','經驗','神經','再生','模式','微菌','大師','學術','生科','生資','交流','升等','尖端','協辦','研究週','資料庫','再生+神經'];
+    refreshAll();
+  }
+}
+
+let isFirstLoad = true;
+
+function refreshAll() {
+  document.getElementById('totalCount').textContent = '共 ' + records.length + ' 筆紀錄';
+  buildFilterOptions();
+  buildFormSelects();
+  
+  // 首次載入預設顯示最新年度
+  if (isFirstLoad && records.length > 0) {
+    const latestYear = Math.max(...records.map(r => Number(r.year) || 0));
+    if (latestYear) {
+      document.getElementById('filterYear').value = String(latestYear);
+    }
+    isFirstLoad = false;
+  }
+  
+  renderTable();
+  renderReport();
+}
+
+// ── Status bar ──
+function showStatus(type, html) {
+  const bar = document.getElementById('statusBar');
+  bar.className = 'status-bar show ' + type;
+  bar.innerHTML = html;
+}
+function hideStatus() {
+  document.getElementById('statusBar').className = 'status-bar';
+}
+
+// ── View switching ──
+function switchView(name) {
+  ['list','form','report','tools'].forEach(v => {
+    document.getElementById('view-' + v).style.display = v === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === name);
+  });
+}
+
+// ── Build filter dropdowns ──
+function buildFilterOptions() {
+  const years = [...new Set(records.map(r => r.year))].filter(Boolean).sort((a,b) => b - a);
+  const allCats = [...new Set([...categories, ...records.map(r => r.category)])].filter(Boolean);
+  const allTypes = [...new Set([...types, ...records.map(r => r.type)])].filter(Boolean);
+  
+  setOptions('filterYear', years.map(y => ({v: y, t: y})), '全部年分');
+  setOptions('filterCat', allCats.map(c => ({v: c, t: c})), '全部大類');
+  setOptions('filterType', allTypes.map(t => ({v: t, t: t})), '全部類型');
+  setOptions('reportYear', years.map(y => ({v: y, t: y + ' 年度'})), '所有年度');
+}
+
+function setOptions(id, items, allLabel) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">' + allLabel + '</option>' + items.map(i => '<option value="' + i.v + '">' + i.t + '</option>').join('');
+  sel.value = cur;
+}
+
+// ── Build form selects ──
+function buildFormSelects() {
+  const allCats = [...new Set([...categories, ...records.map(r => r.category)])].filter(Boolean);
+  const allTypes = [...new Set([...types, ...records.map(r => r.type)])].filter(Boolean);
+  
+  document.getElementById('f-category').innerHTML = allCats.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+  document.getElementById('f-type').innerHTML = allTypes.map(t => '<option value="' + t + '">' + (TYPE_EMOJI[t]||'📌') + ' ' + t + '</option>').join('');
+  document.getElementById('loc-list').innerHTML = locations.map(l => '<option value="' + l + '">').join('');
+}
+
+// ── Selection state ──
+let selectedRows = new Set();
+
+function updateBatchBar() {
+  const bar = document.getElementById('batchBar');
+  if (selectedRows.size > 0) {
+    bar.style.display = '';
+    document.getElementById('batchCount').textContent = selectedRows.size;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function toggleSelectAll(el) {
+  const cbs = document.querySelectorAll('#tableBody .row-cb');
+  if (el.checked) {
+    cbs.forEach(cb => { cb.checked = true; selectedRows.add(Number(cb.dataset.row)); cb.closest('tr').classList.add('selected'); });
+  } else {
+    cbs.forEach(cb => { cb.checked = false; cb.closest('tr').classList.remove('selected'); });
+    selectedRows.clear();
+  }
+  updateBatchBar();
+}
+
+function toggleRowSelect(cb) {
+  const rowIdx = Number(cb.dataset.row);
+  if (cb.checked) { selectedRows.add(rowIdx); cb.closest('tr').classList.add('selected'); }
+  else { selectedRows.delete(rowIdx); cb.closest('tr').classList.remove('selected'); }
+  // Update selectAll state
+  const allCbs = document.querySelectorAll('#tableBody .row-cb');
+  const allChecked = allCbs.length > 0 && [...allCbs].every(c => c.checked);
+  document.getElementById('selectAll').checked = allChecked;
+  updateBatchBar();
+}
+
+function clearSelection() {
+  selectedRows.clear();
+  document.querySelectorAll('#tableBody .row-cb').forEach(cb => { cb.checked = false; cb.closest('tr').classList.remove('selected'); });
+  document.getElementById('selectAll').checked = false;
+  updateBatchBar();
+}
+
+// ── Render table ──
+function renderTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const fy = document.getElementById('filterYear').value;
+  const fc = document.getElementById('filterCat').value;
+  const ft = document.getElementById('filterType').value;
+  
+  let data = records.filter(r => {
+    if (fy && String(r.year) !== fy) return false;
+    if (fc && r.category !== fc) return false;
+    if (ft && r.type !== ft) return false;
+    if (q && !(r.title||'').toLowerCase().includes(q) && !(r.speaker||'').toLowerCase().includes(q) && !(r.unit||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  
+  data.sort((a,b) => (String(b.date)||'').localeCompare(String(a.date)||''));
+  
+  document.getElementById('filteredCount').textContent = data.length;
+  const empty = document.getElementById('emptyMsg');
+  const tbody = document.getElementById('tableBody');
+  
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+    document.getElementById('selectAll').checked = false;
+    return;
+  }
+  empty.style.display = 'none';
+  
+  tbody.innerHTML = data.map(r => {
+    const color = CAT_COLORS[r.category] || '#6b5f54';
+    const emoji = TYPE_EMOJI[r.type] || '📌';
+    const intlClass = r.intl === '國際' ? 'intl' : r.intl === '國內' ? 'domestic' : '';
+    const intlText = r.intl === '國際' ? '🌍 國際' : r.intl === '國內' ? '🏠 國內' : '';
+    const att = r.attendees ? r.attendees : '';
+    const attClass = att ? '' : ' empty';
+    const checked = selectedRows.has(r.rowIndex) ? ' checked' : '';
+    const selClass = selectedRows.has(r.rowIndex) ? ' selected' : '';
+    
+    return '<tr class="' + selClass + '">' +
+      '<td style="text-align:center;"><input type="checkbox" class="row-cb" data-row="' + r.rowIndex + '" onchange="toggleRowSelect(this)"' + checked + '></td>' +
+      '<td class="cell-date">' + esc(r.date) + '</td>' +
+      '<td><span class="badge" style="background:' + color + '">' + esc(r.category) + '</span></td>' +
+      '<td class="type-tag">' + emoji + ' ' + esc(r.type) + '</td>' +
+      '<td class="cell-title" title="' + esc(r.title) + '">' + esc(r.title) + '</td>' +
+      '<td class="cell-speaker">' + esc(r.speaker) + '</td>' +
+      '<td class="cell-unit">' + esc(r.unit) + '</td>' +
+      '<td class="cell-intl ' + intlClass + '">' + intlText + '</td>' +
+      '<td class="cell-loc">' + esc(r.location) + '</td>' +
+      '<td class="cell-num' + attClass + '">' + (att || '—') + '</td>' +
+      '<td class="cell-actions">' +
+        '<button class="act-btn" title="編輯" onclick="editRecord(' + r.rowIndex + ')">✏️</button>' +
+        '<button class="act-btn del" title="刪除" onclick="deleteRecord(' + r.rowIndex + ')">🗑️</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+  
+  // Sync selectAll
+  const allCbs = document.querySelectorAll('#tableBody .row-cb');
+  document.getElementById('selectAll').checked = allCbs.length > 0 && [...allCbs].every(c => c.checked);
+  updateBatchBar();
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── Form ──
+function resetForm() {
+  editingRowIndex = null;
+  document.getElementById('formTitle').textContent = '➕ 新增演講建檔';
+  document.getElementById('saveBtn').textContent = '✅ 新增建檔';
+  document.getElementById('f-datetime').value = '';
+  document.getElementById('f-year').value = '';
+  document.getElementById('f-category').selectedIndex = 0;
+  document.getElementById('f-type').selectedIndex = 0;
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-speaker').value = '';
+  document.getElementById('f-unit').value = '';
+  document.getElementById('f-intl').value = '';
+  document.getElementById('f-location').value = '';
+  document.getElementById('f-attendees').value = '';
+}
+
+// datetime-local → "YYYY.MM.DD HH:mm"
+function datetimeToDisplay(dtVal) {
+  if (!dtVal) return '';
+  // dtVal = "2025-04-15T14:00"
+  const [datePart, timePart] = dtVal.split('T');
+  const d = datePart.replace(/-/g, '.');
+  return timePart ? d + ' ' + timePart : d;
+}
+
+// "YYYY.MM.DD" or "YYYY.MM.DD HH:mm" → datetime-local value
+function displayToDatetime(str) {
+  if (!str) return '';
+  // handle "2025.04.15 14:00" or "2025.04.15"
+  const clean = String(str).trim();
+  const parts = clean.split(/[\s]+/);
+  const datePart = (parts[0] || '').replace(/\./g, '-');
+  const timePart = parts[1] || '09:00';
+  if (!datePart || datePart.length < 10) return '';
+  return datePart + 'T' + timePart;
+}
+
+document.getElementById('f-datetime').addEventListener('change', function() {
+  const val = this.value; // "2025-04-15T14:00"
+  if (val) {
+    const year = parseInt(val.substring(0, 4));
+    document.getElementById('f-year').value = year;
+  }
+});
+
+function editRecord(rowIndex) {
+  const rec = records.find(r => r.rowIndex === rowIndex);
+  if (!rec) return;
+  
+  editingRowIndex = rowIndex;
+  document.getElementById('formTitle').textContent = '✏️ 編輯演講資料';
+  document.getElementById('saveBtn').textContent = '💾 儲存修改';
+  
+  document.getElementById('f-datetime').value = displayToDatetime(rec.date);
+  document.getElementById('f-year').value = rec.year || '';
+  document.getElementById('f-category').value = rec.category || '';
+  document.getElementById('f-type').value = rec.type || '';
+  document.getElementById('f-title').value = rec.title || '';
+  document.getElementById('f-speaker').value = rec.speaker || '';
+  document.getElementById('f-unit').value = rec.unit || '';
+  document.getElementById('f-intl').value = rec.intl || '';
+  document.getElementById('f-location').value = rec.location || '';
+  document.getElementById('f-attendees').value = rec.attendees || '';
+  
+  switchView('form');
+}
+
+async function saveRecord() {
+  const dt = document.getElementById('f-datetime').value;
+  const title = document.getElementById('f-title').value.trim();
+  if (!dt || !title) return alert('請至少填入日期與講題');
+  
+  const dateStr = datetimeToDisplay(dt);
+  const yearVal = document.getElementById('f-year').value || parseInt(dt.substring(0,4));
+  
+  const data = {
+    year: Number(yearVal),
+    date: dateStr,
+    category: document.getElementById('f-category').value,
+    type: document.getElementById('f-type').value,
+    title: title,
+    speaker: document.getElementById('f-speaker').value.trim(),
+    unit: document.getElementById('f-unit').value.trim(),
+    intl: document.getElementById('f-intl').value,
+    location: document.getElementById('f-location').value.trim(),
+    attendees: document.getElementById('f-attendees').value || '',
+  };
+  
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 儲存中...';
+  
+  try {
+    const body = editingRowIndex
+      ? { action: 'updateRecord', rowIndex: editingRowIndex, data }
+      : { action: 'addRecord', data };
+    
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // Apps Script limitation
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    
+    if (json.success) {
+      showStatus('success', '✅ ' + json.message);
+      setTimeout(hideStatus, 2000);
+      await loadData();
+      switchView('list');
+    } else {
+      showStatus('error', '❌ 儲存失敗：' + json.error);
+    }
+  } catch (e) {
+    // Offline mode: update local state
+    if (editingRowIndex) {
+      const idx = records.findIndex(r => r.rowIndex === editingRowIndex);
+      if (idx >= 0) records[idx] = { ...records[idx], ...data };
+    } else {
+      const maxRow = records.reduce((m, r) => Math.max(m, r.rowIndex || 0), 1);
+      records.push({ ...data, rowIndex: maxRow + 1 });
+    }
+    showStatus('success', '✅ 已儲存（離線模式）');
+    setTimeout(hideStatus, 2000);
+    refreshAll();
+    switchView('list');
+  }
+  
+  btn.disabled = false;
+  btn.textContent = editingRowIndex ? '💾 儲存修改' : '✅ 新增建檔';
+  editingRowIndex = null;
+}
+
+async function deleteRecord(rowIndex) {
+  const rec = records.find(r => r.rowIndex === rowIndex);
+  if (!rec) return;
+  if (!confirm('確定要刪除「' + rec.title + '」？')) return;
+  
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'deleteRecord', rowIndex }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      showStatus('success', '✅ 已刪除');
+      setTimeout(hideStatus, 2000);
+      await loadData();
+    } else {
+      showStatus('error', '❌ ' + json.error);
+    }
+  } catch (e) {
+    records = records.filter(r => r.rowIndex !== rowIndex);
+    showStatus('success', '✅ 已刪除（離線模式）');
+    setTimeout(hideStatus, 2000);
+    refreshAll();
+  }
+}
+
+// ── Report ──
+function renderReport() {
+  const ry = document.getElementById('reportYear').value;
+  const src = ry ? records.filter(r => String(r.year) === ry) : records;
+  
+  const bC = {}, bT = {}, bY = {}, bI = {'國內':0,'國際':0,'未標註':0}, bL = {};
+  let tA = 0, cA = 0;
+  src.forEach(r => {
+    bC[r.category] = (bC[r.category]||0) + 1;
+    bT[r.type] = (bT[r.type]||0) + 1;
+    bY[r.year] = (bY[r.year]||0) + 1;
+    if (r.intl === '國際') bI['國際']++; else if (r.intl === '國內') bI['國內']++; else bI['未標註']++;
+    if (r.location) bL[r.location] = (bL[r.location]||0) + 1;
+    const n = Number(r.attendees);
+    if (n > 0) { tA += n; cA++; }
+  });
+  
+  const avg = cA ? Math.round(tA / cA) : 0;
+  const intlPct = src.length ? Math.round(bI['國際'] / src.length * 100) : 0;
+  
+  document.getElementById('statCards').innerHTML =
+    statCard('總場次', src.length, '', '#c45d3e') +
+    statCard('總參加人次', tA.toLocaleString(), cA + ' 場有紀錄', '#2a7a6d') +
+    statCard('平均每場人數', avg, '', '#b8860b') +
+    statCard('國際場次', bI['國際'], '佔 ' + intlPct + '%', '#3a6ea5');
+  
+  let charts = '';
+  charts += chartCard('依大類分布', hbar(bC, '#c45d3e'));
+  charts += chartCard('依類型分布', hbar(bT, '#2a7a6d'));
+  if (!ry) {
+    const sorted = Object.fromEntries(Object.entries(bY).sort(([a],[b]) => a - b));
+    charts += chartCard('歷年場次趨勢', hbar(sorted, '#b8860b'));
+  }
+  charts += chartCard('國際/國內分布', hbar(bI, '#7b4b8a'));
+  charts += '<div class="card chart-card chart-full"><h3>依地點分布</h3>' + hbar(bL, '#1a8b9a', 400) + '</div>';
+  document.getElementById('chartsGrid').innerHTML = charts;
+  
+  // Cross table
+  if (!ry) {
+    const allYears = [...new Set(records.map(r => r.year))].filter(Boolean).sort((a,b) => a - b);
+    const allCats = [...new Set([...categories, ...records.map(r => r.category)])].filter(Boolean);
+    
+    let html = '<div class="card cross-table" style="margin-top:16px; padding:20px;"><h3 style="font-size:14px; font-weight:600; color:var(--ink60); margin:0 0 14px;">各年度 × 大類 交叉統計</h3><table><thead><tr><th>年度</th>';
+    allCats.forEach(c => html += '<th style="text-align:center">' + esc(c) + '</th>');
+    html += '<th style="text-align:center; font-weight:700;">合計</th></tr></thead><tbody>';
+    
+    allYears.forEach(yr => {
+      const yrR = records.filter(r => r.year == yr);
+      html += '<tr><td style="font-weight:600">' + yr + '</td>';
+      allCats.forEach(c => {
+        const cnt = yrR.filter(r => r.category === c).length;
+        html += '<td class="cross-cell' + (cnt ? '' : ' zero') + '">' + (cnt || '·') + '</td>';
+      });
+      html += '<td class="cross-total">' + yrR.length + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('crossTableArea').innerHTML = html;
+  } else {
+    // Year detail table
+    const yearRecs = records.filter(r => String(r.year) === ry).sort((a,b) => (String(a.date)||'').localeCompare(String(b.date)||''));
+    let html = '<div class="card" style="margin-top:16px; padding:20px; overflow-x:auto;"><h3 style="font-size:14px; font-weight:600; color:var(--ink60); margin:0 0 14px;">' + ry + ' 年度明細</h3><table><thead><tr><th>日期</th><th>大類</th><th>類型</th><th>講題</th><th>講師</th><th>人數</th></tr></thead><tbody>';
+    yearRecs.forEach(r => {
+      const color = CAT_COLORS[r.category] || '#6b5f54';
+      html += '<tr><td class="cell-date">' + esc(r.date) + '</td>' +
+        '<td><span class="badge" style="background:' + color + '">' + esc(r.category) + '</span></td>' +
+        '<td>' + (TYPE_EMOJI[r.type]||'') + ' ' + esc(r.type) + '</td>' +
+        '<td class="cell-title">' + esc(r.title) + '</td>' +
+        '<td class="cell-speaker">' + esc(r.speaker) + '</td>' +
+        '<td class="cell-num' + (r.attendees ? '' : ' empty') + '">' + (r.attendees || '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('crossTableArea').innerHTML = html;
+  }
+}
+
+function statCard(label, value, sub, color) {
+  return '<div class="stat-card"><div class="stat-label">' + label + '</div>' +
+    '<div class="stat-value" style="color:' + color + '">' + value + '</div>' +
+    (sub ? '<div class="stat-sub">' + sub + '</div>' : '') + '</div>';
+}
+
+function chartCard(title, content) {
+  return '<div class="card chart-card"><h3>' + title + '</h3>' + content + '</div>';
+}
+
+function hbar(data, color, maxW) {
+  const entries = Object.entries(data).sort((a,b) => b[1] - a[1]);
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  const mw = maxW || 280;
+  return '<div class="hbar">' + entries.map(([k,v]) =>
+    '<div class="hbar-row">' +
+    '<div class="hbar-label">' + esc(k) + '</div>' +
+    '<div class="hbar-track" style="max-width:' + mw + 'px"><div class="hbar-fill" style="width:' + (v/max*100) + '%;background:' + color + '"></div></div>' +
+    '<div class="hbar-val">' + v + '</div></div>'
+  ).join('') + '</div>';
+}
+
+// ── Settings modal ──
+function openSettings() {
+  renderSettingsTags();
+  document.getElementById('settingsModal').style.display = '';
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').style.display = 'none';
+}
+
+let editingCatIdx = null, editingTypeIdx = null;
+
+function renderSettingsTags() {
+  // Categories
+  document.getElementById('catTags').innerHTML = categories.map((c, i) => {
+    if (editingCatIdx === i) {
+      return '<div class="tag-item"><input id="editCatInput" value="' + esc(c) + '" onkeydown="if(event.key===\'Enter\')saveCatEdit()">' +
+        '<button class="tag-btn save" onclick="saveCatEdit()">✓</button>' +
+        '<button class="tag-btn" onclick="cancelCatEdit()">✕</button></div>';
+    }
+    const col = CAT_COLORS[c] || 'var(--ink)';
+    return '<div class="tag-item"><span style="color:' + col + ';font-weight:600">' + esc(c) + '</span>' +
+      '<button class="tag-btn" onclick="startCatEdit(' + i + ')" title="重命名">✏️</button>' +
+      '<button class="tag-btn del" onclick="deleteCat(' + i + ')" title="刪除">✕</button></div>';
+  }).join('');
+  
+  // Types
+  document.getElementById('typeTags').innerHTML = types.map((t, i) => {
+    if (editingTypeIdx === i) {
+      return '<div class="tag-item"><input id="editTypeInput" value="' + esc(t) + '" onkeydown="if(event.key===\'Enter\')saveTypeEdit()">' +
+        '<button class="tag-btn save" onclick="saveTypeEdit()">✓</button>' +
+        '<button class="tag-btn" onclick="cancelTypeEdit()">✕</button></div>';
+    }
+    return '<div class="tag-item"><span>' + (TYPE_EMOJI[t]||'📌') + ' ' + esc(t) + '</span>' +
+      '<button class="tag-btn" onclick="startTypeEdit(' + i + ')" title="重命名">✏️</button>' +
+      '<button class="tag-btn del" onclick="deleteType(' + i + ')" title="刪除">✕</button></div>';
+  }).join('');
+}
+
+function addCategory() {
+  const v = document.getElementById('newCatInput').value.trim();
+  if (v && !categories.includes(v)) { categories.push(v); document.getElementById('newCatInput').value = ''; renderSettingsTags(); }
+}
+function addType() {
+  const v = document.getElementById('newTypeInput').value.trim();
+  if (v && !types.includes(v)) { types.push(v); document.getElementById('newTypeInput').value = ''; renderSettingsTags(); }
+}
+function deleteCat(i) { if (confirm('確定刪除「' + categories[i] + '」？')) { categories.splice(i, 1); renderSettingsTags(); } }
+function deleteType(i) { if (confirm('確定刪除「' + types[i] + '」？')) { types.splice(i, 1); renderSettingsTags(); } }
+function startCatEdit(i) { editingCatIdx = i; editingTypeIdx = null; renderSettingsTags(); document.getElementById('editCatInput')?.focus(); }
+function cancelCatEdit() { editingCatIdx = null; renderSettingsTags(); }
+function saveCatEdit() {
+  const v = document.getElementById('editCatInput')?.value.trim();
+  if (v) categories[editingCatIdx] = v;
+  editingCatIdx = null; renderSettingsTags();
+}
+function startTypeEdit(i) { editingTypeIdx = i; editingCatIdx = null; renderSettingsTags(); document.getElementById('editTypeInput')?.focus(); }
+function cancelTypeEdit() { editingTypeIdx = null; renderSettingsTags(); }
+function saveTypeEdit() {
+  const v = document.getElementById('editTypeInput')?.value.trim();
+  if (v) types[editingTypeIdx] = v;
+  editingTypeIdx = null; renderSettingsTags();
+}
+
+async function saveSettings() {
+  showStatus('info', '<span class="spinner"></span> 正在同步分類設定...');
+  try {
+    await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'setCategories', items: categories }),
+    });
+    await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'setTypes', items: types }),
+    });
+    showStatus('success', '✅ 分類設定已同步至 Google Sheet');
+    setTimeout(hideStatus, 2000);
+    buildFilterOptions();
+    buildFormSelects();
+    closeSettings();
+  } catch (e) {
+    showStatus('success', '✅ 已更新（離線模式）');
+    setTimeout(hideStatus, 2000);
+    buildFilterOptions();
+    buildFormSelects();
+    closeSettings();
+  }
+}
+
+// ── Batch Edit ──
+function openBatchEdit() {
+  if (selectedRows.size === 0) return;
+  document.getElementById('batchEditCount').textContent = '（' + selectedRows.size + ' 筆）';
+  
+  // Populate selects
+  const allCats = [...new Set([...categories, ...records.map(r => r.category)])].filter(Boolean);
+  const allTypes = [...new Set([...types, ...records.map(r => r.type)])].filter(Boolean);
+  document.getElementById('bf-category').innerHTML = allCats.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+  document.getElementById('bf-type').innerHTML = allTypes.map(t => '<option value="' + t + '">' + (TYPE_EMOJI[t]||'📌') + ' ' + t + '</option>').join('');
+  
+  // Reset all checkboxes and disable fields
+  ['category','type','intl','location','unit','year'].forEach(f => {
+    document.getElementById('bc-' + f).checked = false;
+    const el = document.getElementById('bf-' + f);
+    el.disabled = true;
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  
+  // Wire checkbox → enable/disable field
+  ['category','type','intl','location','unit','year'].forEach(f => {
+    document.getElementById('bc-' + f).onchange = function() {
+      document.getElementById('bf-' + f).disabled = !this.checked;
+    };
+  });
+  
+  document.getElementById('batchModal').style.display = '';
+}
+
+function closeBatchEdit() {
+  document.getElementById('batchModal').style.display = 'none';
+}
+
+async function executeBatchEdit() {
+  const fields = {};
+  ['category','type','intl','location','unit','year'].forEach(f => {
+    if (document.getElementById('bc-' + f).checked) {
+      fields[f] = document.getElementById('bf-' + f).value;
+    }
+  });
+  
+  const fieldNames = Object.keys(fields);
+  if (fieldNames.length === 0) return alert('請至少勾選一個欄位');
+  
+  const fieldLabels = {'category':'大類','type':'類型','intl':'國際/國內','location':'地點','unit':'講師單位','year':'年分'};
+  const desc = fieldNames.map(f => fieldLabels[f] + ' → ' + (fields[f] || '（清空）')).join('\n');
+  if (!confirm('確定要修改 ' + selectedRows.size + ' 筆資料？\n\n修改內容：\n' + desc)) return;
+  
+  closeBatchEdit();
+  showStatus('info', '<span class="spinner"></span> 正在批次修改 ' + selectedRows.size + ' 筆資料...');
+  
+  let successCount = 0;
+  const rowIndices = [...selectedRows];
+  
+  for (const rowIndex of rowIndices) {
+    const rec = records.find(r => r.rowIndex === rowIndex);
+    if (!rec) continue;
+    
+    const updated = { ...rec };
+    for (const [k, v] of Object.entries(fields)) {
+      updated[k] = k === 'year' ? (Number(v) || rec.year) : v;
+    }
+    
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'updateRecord', rowIndex, data: updated }),
+      });
+      const json = await res.json();
+      if (json.success) successCount++;
+    } catch (e) {
+      // Offline: update local
+      const idx = records.findIndex(r => r.rowIndex === rowIndex);
+      if (idx >= 0) Object.assign(records[idx], fields, fields.year ? { year: Number(fields.year) } : {});
+      successCount++;
+    }
+  }
+  
+  showStatus('success', '✅ 已修改 ' + successCount + ' 筆資料');
+  setTimeout(hideStatus, 2500);
+  clearSelection();
+  
+  try { await loadData(); } catch(e) { refreshAll(); }
+}
+
+async function batchDelete() {
+  if (selectedRows.size === 0) return;
+  if (!confirm('確定要刪除選取的 ' + selectedRows.size + ' 筆資料？此操作無法復原。')) return;
+  
+  showStatus('info', '<span class="spinner"></span> 正在批次刪除...');
+  
+  // Delete from bottom row first to avoid row shifting issues
+  const rowIndices = [...selectedRows].sort((a,b) => b - a);
+  let successCount = 0;
+  
+  for (const rowIndex of rowIndices) {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'deleteRecord', rowIndex }),
+      });
+      const json = await res.json();
+      if (json.success) successCount++;
+    } catch (e) {
+      records = records.filter(r => r.rowIndex !== rowIndex);
+      successCount++;
+    }
+  }
+  
+  showStatus('success', '✅ 已刪除 ' + successCount + ' 筆資料');
+  setTimeout(hideStatus, 2500);
+  clearSelection();
+  
+  try { await loadData(); } catch(e) { refreshAll(); }
+}
+
+// ── Excel Export ──
+function getFilteredRecords() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const fy = document.getElementById('filterYear').value;
+  const fc = document.getElementById('filterCat').value;
+  const ft = document.getElementById('filterType').value;
+  return records.filter(r => {
+    if (fy && String(r.year) !== fy) return false;
+    if (fc && r.category !== fc) return false;
+    if (ft && r.type !== ft) return false;
+    if (q && !(r.title||'').toLowerCase().includes(q) && !(r.speaker||'').toLowerCase().includes(q) && !(r.unit||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a,b) => (String(b.date)||'').localeCompare(String(a.date)||''));
+}
+
+function exportListExcel() {
+  const data = getFilteredRecords();
+  if (data.length === 0) return alert('目前無資料可匯出');
+  
+  const rows = data.map(r => ({
+    '年分': r.year,
+    '日期': r.date,
+    '大類': r.category,
+    '類型': r.type,
+    '講題': r.title,
+    '講師': r.speaker,
+    '講師單位': r.unit,
+    '國際國內': r.intl,
+    '地點': r.location,
+    '報名參加人數': r.attendees || '',
+  }));
+  
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:6},{wch:18},{wch:10},{wch:10},{wch:50},{wch:20},{wch:25},{wch:10},{wch:20},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, '演講清單');
+  
+  const fy = document.getElementById('filterYear').value;
+  const fname = fy ? '演講清單_' + fy + '年度.xlsx' : '演講清單_全部年度.xlsx';
+  XLSX.writeFile(wb, fname);
+  showStatus('success', '✅ 已匯出 ' + data.length + ' 筆資料至 ' + fname);
+  setTimeout(hideStatus, 3000);
+}
+
+function exportReportExcel() {
+  const ry = document.getElementById('reportYear').value;
+  const src = ry ? records.filter(r => String(r.year) === ry) : records;
+  if (src.length === 0) return alert('目前無資料可匯出');
+  
+  const wb = XLSX.utils.book_new();
+  
+  // Sheet 1: 統計總覽
+  const bC = {}, bT = {}, bI = {'國內':0,'國際':0,'未標註':0};
+  let tA = 0, cA = 0;
+  src.forEach(r => {
+    bC[r.category] = (bC[r.category]||0) + 1;
+    bT[r.type] = (bT[r.type]||0) + 1;
+    if (r.intl === '國際') bI['國際']++; else if (r.intl === '國內') bI['國內']++; else bI['未標註']++;
+    const n = Number(r.attendees);
+    if (n > 0) { tA += n; cA++; }
+  });
+  const avg = cA ? Math.round(tA / cA) : 0;
+  
+  const summaryRows = [
+    {'項目': '總場次', '數值': src.length},
+    {'項目': '總參加人次', '數值': tA},
+    {'項目': '有紀錄場次', '數值': cA},
+    {'項目': '平均每場人數', '數值': avg},
+    {'項目': '國際場次', '數值': bI['國際']},
+    {'項目': '國內場次', '數值': bI['國內']},
+    {'項目': '', '數值': ''},
+    {'項目': '── 依大類分布 ──', '數值': ''},
+  ];
+  Object.entries(bC).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => summaryRows.push({'項目': k, '數值': v}));
+  summaryRows.push({'項目': '', '數值': ''});
+  summaryRows.push({'項目': '── 依類型分布 ──', '數值': ''});
+  Object.entries(bT).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => summaryRows.push({'項目': k, '數值': v}));
+  
+  const ws1 = XLSX.utils.json_to_sheet(summaryRows);
+  ws1['!cols'] = [{wch:20},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws1, '統計總覽');
+  
+  // Sheet 2: 年度×大類 交叉表
+  if (!ry) {
+    const allYears = [...new Set(records.map(r => r.year))].filter(Boolean).sort((a,b) => a - b);
+    const allCats = [...new Set([...categories, ...records.map(r => r.category)])].filter(Boolean);
+    const crossRows = allYears.map(yr => {
+      const yrR = records.filter(r => r.year == yr);
+      const row = {'年度': yr};
+      allCats.forEach(c => { row[c] = yrR.filter(r => r.category === c).length || ''; });
+      row['合計'] = yrR.length;
+      return row;
+    });
+    const ws2 = XLSX.utils.json_to_sheet(crossRows);
+    ws2['!cols'] = [{wch:6}, ...allCats.map(() => ({wch:10})), {wch:6}];
+    XLSX.utils.book_append_sheet(wb, ws2, '年度交叉統計');
+  }
+  
+  // Sheet 3: 明細
+  const detailRows = src.sort((a,b) => (String(a.date)||'').localeCompare(String(b.date)||'')).map(r => ({
+    '年分': r.year, '日期': r.date, '大類': r.category, '類型': r.type,
+    '講題': r.title, '講師': r.speaker, '講師單位': r.unit,
+    '國際國內': r.intl, '地點': r.location, '報名參加人數': r.attendees || '',
+  }));
+  const ws3 = XLSX.utils.json_to_sheet(detailRows);
+  ws3['!cols'] = [{wch:6},{wch:18},{wch:10},{wch:10},{wch:50},{wch:20},{wch:25},{wch:10},{wch:20},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws3, '演講明細');
+  
+  const fname = ry ? '演講統計報表_' + ry + '年度.xlsx' : '演講統計報表_全部年度.xlsx';
+  XLSX.writeFile(wb, fname);
+  showStatus('success', '✅ 已匯出報表至 ' + fname);
+  setTimeout(hideStatus, 3000);
+}
+</script>
+</body>
+</html>
