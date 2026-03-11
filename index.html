@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>院外計畫與獎項查詢系統</title>
+  
+  <!-- 引入 Google Fonts: Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 引入 Google 開源圖示庫 Material Symbols -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <style>
+    /* 全域套用 Noto Sans TC 字型 */
+    body {
+      font-family: 'Noto Sans TC', sans-serif !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+    }
+    /* 自訂捲軸樣式 */
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* 核心 RWD 換行邏輯 */
+    .mobile-wrap {
+      white-space: normal !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+    }
+    
+    .chart-container {
+      min-width: 300px;
+    }
+
+    /* 彈出視窗動畫 */
+    .modal-enter {
+      animation: modalFadeIn 0.3s ease-out forwards;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95) translateY(-20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+
+  <!-- 引入 React 核心函式庫 -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- 引入 Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-x-hidden text-left">
+  
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, Fragment } = React;
+
+    // ==========================================
+    // ⚙️ API 設定區
+    // ==========================================
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzOZlm-tC31TE__q5cbPZw3GVNCaZ4eO4uOKkWfCZKXw0D9Rpl30f-cJd-2QrPW7iEX/exec'; 
+
+    // --- 輔助函式 ---
+    const formatYear = (yearStr) => {
+      if (!yearStr) return '';
+      return String(yearStr).replace(/年度/g, '').trim();
+    };
+
+    const formatCurrency = (numStr) => {
+      if (!numStr || numStr === '0' || numStr === 0) return '無資料';
+      const num = parseInt(String(numStr).replace(/,/g, ''), 10);
+      if (isNaN(num)) return numStr;
+      return new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(num);
+    };
+
+    // 🌟 字串簡化與特徵萃取 (過濾標點符號與空白)
+    const simplifyName = (name) => {
+      if(!name) return '';
+      return name.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase(); 
+    };
+
+    // 🌟 字串模糊比對演算法 (Sørensen–Dice coefficient)
+    const getSimilarity = (s1, s2) => {
+      if (!s1 || !s2) return 0;
+      if (s1 === s2) return 1;
+      const bigrams = (str) => {
+        const bg = new Set();
+        for(let i=0; i<str.length-1; i++) bg.add(str.substring(i, i+2));
+        return bg;
+      };
+      const set1 = bigrams(s1);
+      const set2 = bigrams(s2);
+      if (set1.size === 0 && set2.size === 0) return 1;
+      if (set1.size === 0 || set2.size === 0) return 0;
+      let intersection = 0;
+      set1.forEach(bg => { if(set2.has(bg)) intersection++; });
+      return (2.0 * intersection) / (set1.size + set2.size); 
+    };
+
+    function App() {
+      const [data, setData] = useState([]); 
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [hospitalMap, setHospitalMap] = useState({}); 
+      const [applicationData, setApplicationData] = useState([]);
+      const [activeTab, setActiveTab] = useState('query');
+      
+      const [showReportWarning, setShowReportWarning] = useState(false);
+
+      // 搜尋狀態
+      const [searchHost, setSearchHost] = useState('');
+      const [searchUnit, setSearchUnit] = useState('');
+      const [searchYear, setSearchYear] = useState(''); 
+      const [searchCategory, setSearchCategory] = useState(''); // 🌟 新增：類別篩選
+      const [hasSetDefaultYear, setHasSetDefaultYear] = useState(false); 
+      const [expandedRowId, setExpandedRowId] = useState(null);
+
+      // 報表狀態
+      const [reportUnit, setReportUnit] = useState('');
+      const [reportYear, setReportYear] = useState(''); 
+      const [reportCategory, setReportCategory] = useState(''); // 🌟 新增：報表類別篩選
+      
+      const [chartResearchType, setChartResearchType] = useState(''); 
+      const [trendMode, setTrendMode] = useState('approved'); 
+      const [typeMode, setTypeMode] = useState('approved');   
+      
+      const [multiYearMode, setMultiYearMode] = useState('all'); 
+
+      const [reportListFilterType, setReportListFilterType] = useState('');
+      const [reportListFilterStatus, setReportListFilterStatus] = useState('all');
+
+      const processFetchedData = (jsonData) => {
+        const approvedRaw = jsonData.approved || [];
+        const appliedRaw = jsonData.applied || [];
+
+        const hMap = {};
+        (jsonData.hospital || []).forEach(row => {
+          const host = row['主持人'] || row['姓名'];
+          const dept = row['服務單位'] || row['單位'] || '';
+          const subDept = row['二級單位'] || row['科別'] || '';
+          const title = row['職稱'] || '';
+          const deptStr = [dept, subDept].filter(Boolean).join(' ');
+          if (host) {
+            if (!hMap[host]) hMap[host] = [];
+            const key = `${deptStr}|${title}`;
+            if (!hMap[host].some(u => u.key === key)) {
+              hMap[host].push({ key, dept: deptStr, title: title });
+            }
+          }
+        });
+        setHospitalMap(hMap);
+
+        const normalizeItem = (p) => {
+          const name = p['計畫名稱'] || p['中文計畫名稱'] || p['計畫中文名稱'] || p['申請計畫名稱'] || '';
+          
+          // 🌟 智慧判斷計畫/獎項類別
+          let catRaw = p['計畫屬性'] || p['歸屬類別'] || p['委託單位'] || p['委託機構'] || '';
+          let cat = '';
+          const matchStr = catRaw + " " + name;
+
+          if (matchStr.includes('國科會傑出研究獎')) {
+            cat = '國科會傑出研究獎';
+          } else if (matchStr.includes('吳大猷')) {
+            cat = '吳大猷先生紀念獎';
+          } else if (matchStr.includes('台大醫院傑出研究獎')) {
+            cat = '台大醫院傑出研究獎';
+          } else if (matchStr.includes('傑出研究獎')) {
+            // 捕捉未具名的傑出研究獎，根據委託單位或名稱上下文自動補全
+            if (matchStr.includes('台大') || matchStr.includes('院內')) cat = '台大醫院傑出研究獎';
+            else cat = '國科會傑出研究獎'; 
+          } else if (matchStr.includes('國衛院') || matchStr.includes('國家衛生研究院')) {
+            cat = '國衛院計畫';
+          } else if (matchStr.includes('國科會') || matchStr.includes('科技部')) {
+            // 🌟 將國科會判斷提前，避免計畫名稱中提到「台大醫院」的國科會計畫被誤判為院內計畫
+            cat = '國科會計畫';
+          } else if (catRaw.includes('院內') || catRaw === '台大醫院' || catRaw === '臺大醫院' || name.includes('院內計畫')) {
+            // 🌟 嚴謹化院內計畫的判斷，避免一般計畫名稱中包含「台大醫院」被誤認
+            cat = '院內計畫';
+          } else {
+            cat = catRaw || '國科會計畫'; // 預設歸類
+          }
+
+          return {
+            ...p,
+            '年度': p['年度'] || p['申請年度'] || '',
+            '執行研究單位': p['執行研究單位'] || p['申請機構'] || p['申請單位'] || p['執行單位'] || '',
+            '主持人': p['主持人'] || p['計畫主持人'] || p['姓名'] || '',
+            '計畫名稱': name,
+            '研究類型': p['研究類型'] || p['計畫類別'] || p['申請類型'] || '',
+            '計畫編號': p['計畫編號'] || p['編號'] || '',
+            '計畫經費': p['計畫經費'] || p['核定經費'] || p['經費'] || 0,
+            '計畫開始日期': p['計畫開始日期'] || p['執行起日'] || '',
+            '計畫結束日期': p['計畫結束日期'] || p['執行迄日'] || '',
+            '_category': cat // 存入系統標準類別
+          };
+        };
+
+        const normApplied = appliedRaw.map(normalizeItem);
+        setApplicationData(normApplied);
+
+        const combined = [];
+        const approvedMap = {}; 
+        
+        approvedRaw.forEach(rawP => {
+          const p = normalizeItem(rawP);
+          const host = p['主持人'];
+          if (!approvedMap[host]) approvedMap[host] = [];
+          approvedMap[host].push(p['計畫名稱']);
+          combined.push({ ...p, _status: '已核定' });
+        });
+        
+        normApplied.forEach(p => {
+          const host = p['主持人'];
+          const appliedName = p['計畫名稱'];
+          const appliedNameSimp = simplifyName(appliedName);
+          let isApproved = false;
+
+          if (approvedMap[host]) {
+            isApproved = approvedMap[host].some(approvedName => {
+              const approvedNameSimp = simplifyName(approvedName);
+              if (approvedNameSimp === appliedNameSimp) return true;
+              if (appliedNameSimp.length > 5 && approvedNameSimp.includes(appliedNameSimp)) return true;
+              if (approvedNameSimp.length > 5 && appliedNameSimp.includes(approvedNameSimp)) return true;
+              if (getSimilarity(appliedNameSimp, approvedNameSimp) > 0.65) return true;
+              return false;
+            });
+          }
+
+          if (!isApproved) {
+            combined.push({ ...p, _status: '未核定' });
+          }
+        });
+        setData(combined);
+      };
+
+      const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await fetch(GAS_API_URL);
+          if (!response.ok) throw new Error('伺服器無回應');
+          const jsonData = await response.json();
+          processFetchedData(jsonData);
+        } catch (err) {
+          setError('連線失敗，請檢查網路環境。');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      useEffect(() => { fetchData(); }, []);
+
+      const uniqueYears = useMemo(() => {
+        const cleanedYears = data.map(item => formatYear(item['年度'])).filter(Boolean);
+        return [...new Set(cleanedYears)].sort((a, b) => b.localeCompare(a));
+      }, [data]);
+
+      const uniqueHospUnits = useMemo(() => {
+        const depts = new Set();
+        Object.values(hospitalMap).forEach(units => {
+          units.forEach(u => { if (u.dept && u.dept !== '無單位資訊') depts.add(u.dept); });
+        });
+        return [...depts].sort();
+      }, [hospitalMap]);
+
+      // 🌟 提取所有獨立類別
+      const uniqueCategories = useMemo(() => {
+        return [...new Set(data.map(item => item._category))].filter(Boolean).sort();
+      }, [data]);
+
+      useEffect(() => {
+        if (uniqueYears.length > 0 && !hasSetDefaultYear) {
+          setSearchYear(uniqueYears[0]); 
+          setHasSetDefaultYear(true);
+        }
+      }, [uniqueYears, hasSetDefaultYear]);
+
+      const filteredData = useMemo(() => {
+        return data.filter(item => {
+          const matchHost = item['主持人']?.includes(searchHost.trim());
+          const sTerm = searchUnit.trim().toLowerCase();
+          const execUnit = (item['執行研究單位'] || '').toLowerCase();
+          const hospUnits = hospitalMap[item['主持人']] || [];
+          const matchHosp = hospUnits.some(u => 
+            (u.dept || '').toLowerCase().includes(sTerm) || (u.title || '').toLowerCase().includes(sTerm)
+          );
+          const matchUnit = !sTerm || execUnit.includes(sTerm) || matchHosp;
+          const matchYear = searchYear ? formatYear(item['年度']) === searchYear : true;
+          const matchCat = searchCategory ? item._category === searchCategory : true;
+          return matchHost && matchUnit && matchYear && matchCat;
+        });
+      }, [data, searchHost, searchUnit, searchYear, searchCategory, hospitalMap]);
+
+      const toggleRow = (id) => setExpandedRowId(expandedRowId === id ? null : id);
+
+      const getHostHistoryList = (hostName) => {
+        return data
+          .filter(d => d['主持人'] === hostName && d._status === '已核定')
+          .map(d => ({ year: formatYear(d['年度']), title: d['計畫名稱'], _category: d._category }))
+          .sort((a,b) => b.year.localeCompare(a.year));
+      };
+
+      // 單位報表核心計算
+      const reportData = useMemo(() => {
+        if (!reportUnit) return null;
+        
+        const unitDataAllYears = data.filter(item => {
+          const isDeptMatch = (hospitalMap[item['主持人']] || []).some(u => u.dept === reportUnit);
+          if (!isDeptMatch) return false;
+
+          // 🌟 報表層級的類別過濾
+          if (reportCategory && item._category !== reportCategory) return false;
+
+          if (multiYearMode === 'first_year_only') {
+            const pid = item['計畫編號'] || '';
+            if (/MY[2-9]/i.test(pid)) return false;
+          }
+          return true;
+        });
+        
+        const yearStatsMap = {};
+        unitDataAllYears.forEach(item => {
+          if (chartResearchType && item['研究類型'] !== chartResearchType) return;
+          const y = formatYear(item['年度']);
+          if (!yearStatsMap[y]) yearStatsMap[y] = { year: y, approved: 0, applied: 0 };
+          yearStatsMap[y].applied++;
+          if (item._status === '已核定') yearStatsMap[y].approved++;
+        });
+        const yearStats = Object.values(yearStatsMap).sort((a, b) => a.year.localeCompare(b.year));
+
+        const unitDataByYear = reportYear 
+          ? unitDataAllYears.filter(item => formatYear(item['年度']) === reportYear) 
+          : unitDataAllYears;
+
+        const typeStatsMap = {};
+        unitDataByYear.forEach(item => {
+          const t = item['研究類型'] || '未分類';
+          if (!typeStatsMap[t]) typeStatsMap[t] = { name: t, approved: 0, applied: 0 };
+          typeStatsMap[t].applied++;
+          if (item._status === '已核定') typeStatsMap[t].approved++;
+        });
+        const typeStats = Object.values(typeStatsMap).sort((a, b) => {
+          const valB = typeMode === 'approved' ? b.approved : b.applied;
+          const valA = typeMode === 'approved' ? a.approved : a.applied;
+          return valB - valA;
+        });
+
+        const totalApproved = unitDataByYear.filter(item => item._status === '已核定').length;
+        const appliedCount = unitDataByYear.length;
+
+        const listUniqueTypes = [...new Set(unitDataByYear.map(item => item['研究類型']).filter(Boolean))].sort();
+        const uniqueResearchTypes = [...new Set(unitDataAllYears.map(item => item['研究類型']).filter(Boolean))].sort();
+        
+        return { 
+          unitDataFiltered: unitDataByYear.sort((a, b) => formatYear(b['年度']).localeCompare(formatYear(a['年度']))),
+          totalApproved, appliedCount, typeStats, yearStats, uniqueResearchTypes, listUniqueTypes,
+          maxYearValue: Math.max(...yearStats.map(s => trendMode === 'approved' ? s.approved : s.applied), 1),
+          maxTypeValue: Math.max(...typeStats.map(s => typeMode === 'approved' ? s.approved : s.applied), 1)
+        };
+      }, [data, reportUnit, reportYear, reportCategory, chartResearchType, trendMode, typeMode, multiYearMode, hospitalMap]);
+
+      const filteredReportList = useMemo(() => {
+        if (!reportData) return [];
+        return reportData.unitDataFiltered.filter(item => {
+          const matchesType = !reportListFilterType || item['研究類型'] === reportListFilterType;
+          const matchesStatus = reportListFilterStatus === 'all' || 
+                               (reportListFilterStatus === 'approved' && item._status === '已核定') ||
+                               (reportListFilterStatus === 'rejected' && item._status === '未核定');
+          return matchesType && matchesStatus;
+        });
+      }, [reportData, reportListFilterType, reportListFilterStatus]);
+
+      const handleTabSwitch = (tab) => {
+        setActiveTab(tab);
+        if (tab === 'report') setShowReportWarning(true);
+      };
+
+      useEffect(() => {
+        setReportListFilterType('');
+        setReportListFilterStatus('all');
+      }, [reportUnit, reportYear, multiYearMode, reportCategory]);
+
+      // 取得類別對應的顏色 Badge
+      const getCategoryBadge = (cat) => {
+        if (!cat) return null;
+        let colorClass = 'bg-slate-500 text-white';
+        if (cat === '國科會計畫') colorClass = 'bg-blue-600 text-white';
+        else if (cat === '國衛院計畫') colorClass = 'bg-emerald-600 text-white';
+        else if (cat === '院內計畫') colorClass = 'bg-teal-600 text-white';
+        else if (cat.includes('獎') || cat.includes('吳大猷')) colorClass = 'bg-amber-500 text-white shadow-sm';
+        else colorClass = 'bg-indigo-500 text-white'; // 預設未分類項目的顏色
+        
+        return (
+          <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest leading-none shrink-0 ${colorClass}`}>
+            {cat}
+          </span>
+        );
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50">
+          {/* 警語視窗 */}
+          {showReportWarning && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 overflow-hidden">
+              <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowReportWarning(false)}></div>
+              <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden modal-enter relative z-10 border border-slate-200 text-left">
+                <div className="bg-amber-500 p-6 flex items-center justify-center text-white">
+                  <span className="material-symbols-outlined text-4xl mr-3 font-black">warning</span>
+                  <h3 className="text-xl font-black tracking-widest uppercase text-center">報表使用重要提醒</h3>
+                </div>
+                <div className="p-8 space-y-6">
+                  <p className="text-slate-700 leading-relaxed font-bold text-base">本報表僅供參考，比對來源為醫院最新年度人事資料，如同仁曾轉入轉出換單位的只會以最新年度單位為主。</p>
+                  <div className="bg-slate-50 border-l-4 border-amber-500 p-4 rounded-r-xl">
+                    <p className="text-sm text-slate-500 font-bold leading-relaxed text-left">範例：如 114 年度由皮膚部轉至醫研部，於前單位時期之計畫不會出現在前單位。</p>
+                  </div>
+                  <button onClick={() => setShowReportWarning(false)} className="w-full py-4 bg-slate-800 hover:bg-black text-white rounded-2xl font-black tracking-widest transition-all active:scale-95 shadow-lg shadow-slate-200">我已瞭解</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <header className="bg-blue-900 text-white shadow-lg print:hidden sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 py-2 sm:py-3 flex justify-between items-center text-center">
+              <div className="flex items-center space-x-2 sm:space-x-3 text-left">
+                <img src="https://i.meee.com.tw/mYSMqrN.png" alt="Logo" className="h-8 sm:h-12 object-contain shrink-0" />
+                <div className="leading-tight">
+                  <div className="text-[9px] sm:text-xs text-blue-200 font-bold tracking-wider">台大醫院 醫學研究部</div>
+                  <h1 className="text-sm sm:text-lg md:text-xl font-black tracking-tight">院外計畫與獎項查詢系統</h1>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                {loading ? (
+                  <div className="bg-blue-800/40 p-1.5 rounded-lg text-blue-100 flex items-center">
+                    <span className="material-symbols-outlined animate-spin text-sm font-black">sync</span>
+                  </div>
+                ) : (
+                  <button onClick={fetchData} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 transition-colors flex items-center" title="更新資料">
+                    <span className="material-symbols-outlined text-sm font-black">refresh</span>
+                  </button>
+                )}
+                <div className="px-2 py-1 rounded bg-black/20 text-[10px] md:text-xs font-bold text-blue-200 border border-blue-700/30">{data.length}</div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-2 sm:px-6 py-4 sm:py-8 flex-1 w-full">
+            {/* 🌟 系統智慧比對提示區塊 */}
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 flex items-start text-indigo-800 text-xs sm:text-sm shadow-sm print:hidden text-left">
+              <span className="material-symbols-outlined text-indigo-500 mr-3 shrink-0 text-xl sm:text-2xl mt-0.5">tips_and_updates</span>
+              <div className="font-bold leading-relaxed tracking-wide space-y-2.5">
+                <div className="flex items-start">
+                  <span className="bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded text-[10px] sm:text-xs mr-2 shrink-0 mt-0.5">提示 1</span>
+                  <span>常有申請人申請計畫名稱與核定名稱不同，系統以相似度演算法去比對避免此類遺珠。</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded text-[10px] sm:text-xs mr-2 shrink-0 mt-0.5">提示 2</span>
+                  <span>如研發分處提供清冊計畫編號無 MY1、MY2、MY3 等標示，則視為一年期計畫。</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded text-[10px] sm:text-xs mr-2 shrink-0 mt-0.5">提示 3</span>
+                  <span className="text-indigo-700">支援「國科會、國衛院等院外計畫」及各式「傑出研究獎項」等多元類別。 更新日20260225</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-1 bg-slate-200 p-1 rounded-xl w-full sm:w-fit mb-6 print:hidden shadow-inner">
+              <button onClick={() => handleTabSwitch('query')} className={`flex-1 sm:flex-none flex items-center justify-center px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'query' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-300'}`}><span className="material-symbols-outlined mr-2">search</span>明細查詢</button>
+              <button onClick={() => handleTabSwitch('report')} className={`flex-1 sm:flex-none flex items-center justify-center px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'report' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-300'}`}><span className="material-symbols-outlined mr-2 text-lg">analytics</span>單位報表</button>
+            </div>
+
+            <div className="w-full">
+              {activeTab === 'query' && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-wider">年度篩選</label>
+                      <select className="w-full px-3 py-2 border-slate-200 border-2 rounded-xl text-sm font-bold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value={searchYear} onChange={(e) => setSearchYear(e.target.value)}>
+                        <option value="">全部年度</option>
+                        {uniqueYears.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-wider">歸屬類別</label>
+                      <select className="w-full px-3 py-2 border-slate-200 border-2 rounded-xl text-sm font-bold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)}>
+                        <option value="">全部類別</option>
+                        {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1 text-left">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1">執行單位 / 醫院科部</label>
+                      <input type="text" className="w-full px-3 py-2 border-slate-200 border-2 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="關鍵字搜尋" value={searchUnit} onChange={(e) => setSearchUnit(e.target.value)} />
+                    </div>
+                    <div className="space-y-1 text-left">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-1">主持人姓名</label>
+                      <input type="text" className="w-full px-3 py-2 border-slate-200 border-2 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="姓名搜尋" value={searchHost} onChange={(e) => setSearchHost(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-left">
+                    <div className="px-4 py-3 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                      <h3 className="text-sm font-black text-slate-800 flex items-center">查詢結果 <span className="ml-2 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-bold">{filteredData.length} 筆</span></h3>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center space-x-2 text-[10px] sm:text-xs font-bold">
+                          <span className="flex items-center text-green-600 font-black"><span className="material-symbols-outlined text-[14px] mr-1">check_circle</span>已核定</span>
+                          <span className="flex items-center text-slate-400 font-black"><span className="material-symbols-outlined text-[14px] mr-1">cancel</span>未核定</span>
+                        </div>
+                        <span className="text-[10px] sm:text-xs text-slate-400 font-bold border-l pl-3 border-slate-200 tracking-tight">💡 點擊列可查看詳細清單</span>
+                      </div>
+                    </div>
+                    
+                    <div className="overflow-x-auto custom-scrollbar text-left">
+                      {loading ? (
+                        <div className="p-16 text-center">
+                          <span className="material-symbols-outlined animate-spin text-5xl mb-4 text-blue-500">sync</span>
+                          <p className="font-bold text-slate-400 animate-pulse text-sm text-center">讀取中...</p>
+                        </div>
+                      ) : (
+                        <div className="min-w-[650px] sm:min-w-full">
+                          <table className="w-full text-left border-collapse text-left">
+                            <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">
+                              <tr>
+                                <th className="px-2 py-3 text-center w-12 text-left">年度</th>
+                                <th className="px-2 py-3 w-18 sm:w-20 text-left">主持人</th>
+                                <th className="px-2 py-3 w-20 sm:w-24 text-center text-left">執行單位</th>
+                                <th className="px-2 py-3 w-28 sm:w-32 bg-emerald-50/30 text-emerald-800 text-left">醫院任職</th>
+                                <th className="px-2 py-3 text-center w-12 text-left">狀態</th>
+                                <th className="px-2 py-3 text-left">計畫名稱</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-sm text-left">
+                              {filteredData.length > 0 ? filteredData.map((item, idx) => {
+                                const rowId = `row-${idx}`;
+                                const isExpanded = expandedRowId === rowId;
+                                const hUnits = hospitalMap[item['主持人']] || [];
+                                const history = isExpanded ? getHostHistoryList(item['主持人']) : [];
+                                
+                                const isMultiYear = /MY/i.test(item['計畫編號'] || '');
+                                
+                                // 🌟 取得當年度該主持人的其他計畫與獎項
+                                const sameYearItems = isExpanded ? data.filter(d => 
+                                  d['主持人'] === item['主持人'] && 
+                                  formatYear(d['年度']) === formatYear(item['年度']) && 
+                                  d._status === '已核定' &&
+                                  d['計畫名稱'] !== item['計畫名稱']
+                                ) : [];
+
+                                return (
+                                  <Fragment key={rowId}>
+                                    <tr onClick={() => toggleRow(rowId)} className={`group cursor-pointer transition-all ${isExpanded ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
+                                      <td className="px-2 py-2.5 text-center whitespace-nowrap"><span className="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{formatYear(item['年度'])}</span></td>
+                                      <td className="px-2 py-2.5 whitespace-nowrap font-bold text-slate-900">{item['主持人']}</td>
+                                      {/* 🌟 移除了 text-xs，與主持人同字級，並微調 max-w 確保空間 */}
+                                      <td className="px-2 py-2.5 text-center text-slate-500"><div className="mobile-wrap max-w-[120px] mx-auto leading-tight">{item['執行研究單位']}</div></td>
+                                      <td className="px-2 py-2.5">
+                                        {hUnits.length > 0 ? (
+                                          <div className="flex flex-col leading-tight min-w-[80px]">
+                                            {/* 🌟 移除了 text-[10px] 與 text-[9px]，科部與主持人同字級，職稱微調為 xs 維持層次 */}
+                                            <span className="text-emerald-700 font-bold mobile-wrap">{hUnits[0].dept}</span>
+                                            <span className="text-xs text-emerald-600/80 mobile-wrap leading-none mt-1">{hUnits[0].title}</span>
+                                          </div>
+                                        ) : <span className="text-slate-300">-</span>}
+                                      </td>
+                                      <td className="px-2 py-2.5 text-center">
+                                        {item._status === '已核定' ? <span className="material-symbols-outlined text-green-600 font-black text-lg">check_circle</span> : <span className="material-symbols-outlined text-slate-300 font-black text-lg">cancel</span>}
+                                      </td>
+                                      <td className="px-2 py-2.5 relative pr-6 text-left">
+                                        <div className={`text-slate-700 mobile-wrap leading-relaxed ${isExpanded ? '' : 'line-clamp-2'}`}>
+                                          <div className="flex items-center gap-1.5 mb-1">
+                                            {getCategoryBadge(item._category)}
+                                            {isMultiYear && (
+                                              <span className="bg-purple-100 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded text-[10px] font-black leading-none" title="包含 MY 之多年期計畫">多</span>
+                                            )}
+                                          </div>
+                                          <span className="font-bold">{item['計畫名稱']}</span>
+                                        </div>
+                                        <span className={`material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-slate-300 transition-transform ${isExpanded ? 'rotate-180 text-blue-500' : ''}`}>expand_more</span>
+                                      </td>
+                                    </tr>
+                                    {isExpanded && (
+                                      <tr>
+                                        <td colSpan="6" className="p-0 border-b border-slate-200 bg-blue-50/30 text-left">
+                                          <div className="px-2 sm:px-10 py-4 sm:py-6 text-left">
+                                            <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 sm:p-7 space-y-6 text-sm text-left">
+                                              
+                                              {/* 主要計畫資訊 */}
+                                              <div className="border-b border-slate-100 pb-4 text-left">
+                                                <div className="flex items-center gap-2 mb-3 text-left">
+                                                  <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded font-black text-white ${item._status === '已核定' ? 'bg-green-600' : 'bg-slate-400'}`}>{item._status}計畫</span>
+                                                  {getCategoryBadge(item._category)}
+                                                  <span className="text-[10px] md:text-xs font-mono text-slate-400 font-bold tracking-tight border-l pl-2 border-slate-200">編號: {item['計畫編號'] || '未編號'}</span>
+                                                </div>
+                                                <h4 className="font-black text-slate-900 leading-relaxed mobile-wrap text-left text-base md:text-lg">{item['計畫名稱']}</h4>
+                                              </div>
+                                              
+                                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-left">
+                                                  <div className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest leading-none">研究類型</div>
+                                                  <div className="font-bold text-slate-700 mobile-wrap text-xs md:text-sm">{item['研究類型'] || '未分類'}</div>
+                                                </div>
+                                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-left">
+                                                  <div className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest leading-none">核定預算</div>
+                                                  <div className="font-black text-emerald-600 text-sm md:text-base tracking-tight">{formatCurrency(item['計畫經費'])}</div>
+                                                </div>
+                                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2 text-left">
+                                                  <div className="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-widest leading-none">執行期程</div>
+                                                  <div className="font-bold text-slate-700 font-mono text-xs md:text-sm tracking-tighter">{item['計畫開始日期'] || 'N/A'} ~ {item['計畫結束日期'] || 'N/A'}</div>
+                                                </div>
+                                              </div>
+
+                                              {/* 🌟 同年度獲獎與核定計畫 */}
+                                              <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-200 text-left">
+                                                <div className="flex items-center mb-3 text-amber-700 text-left">
+                                                  <span className="material-symbols-outlined mr-2 text-xl font-bold">workspace_premium</span>
+                                                  <h5 className="font-black text-sm md:text-base uppercase tracking-widest leading-none">🏆 【{formatYear(item['年度'])}年度】當年度其他核定計畫與獎項</h5>
+                                                </div>
+                                                <div className="space-y-2 text-left">
+                                                  {sameYearItems.length > 0 ? sameYearItems.map((sy, i) => (
+                                                    <div key={i} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-amber-100 shadow-sm text-left items-center">
+                                                      <div className="shrink-0">{getCategoryBadge(sy._category)}</div>
+                                                      <div className="text-sm md:text-base text-slate-800 font-bold leading-normal mobile-wrap text-left flex-1">{sy['計畫名稱']}</div>
+                                                    </div>
+                                                  )) : <div className="text-sm text-slate-400 italic py-2 tracking-wider text-left">當年度無其他核定紀錄</div>}
+                                                </div>
+                                              </div>
+
+                                              {/* 歷年核定紀錄 */}
+                                              <div className="bg-slate-100/50 rounded-xl p-4 border border-slate-200 text-left">
+                                                <div className="flex items-center mb-3 text-blue-700 text-left">
+                                                  <span className="material-symbols-outlined mr-2 text-xl font-bold">history_edu</span>
+                                                  <h5 className="font-black text-sm md:text-base uppercase tracking-widest leading-none">主持人【{item['主持人']}】歷年所有核定紀錄</h5>
+                                                </div>
+                                                <div className="space-y-2 text-left">
+                                                  {history.length > 0 ? history.map((h, i) => (
+                                                    <div key={i} className="flex items-start gap-3 bg-white/60 p-2.5 rounded-lg border border-white shadow-sm transition-colors hover:bg-white text-left items-center">
+                                                      <div className="bg-blue-800 text-white text-[10px] md:text-xs font-black px-2 py-0.5 rounded shrink-0">{h.year}</div>
+                                                      <div className="shrink-0">{getCategoryBadge(h._category)}</div>
+                                                      <div className="text-sm md:text-base text-slate-700 font-bold leading-normal mobile-wrap text-left flex-1">{h.title}</div>
+                                                    </div>
+                                                  )) : <div className="text-sm text-slate-400 italic text-center py-4 tracking-wider text-left text-center">目前查無其他歷年核定紀錄</div>}
+                                                </div>
+                                              </div>
+
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </Fragment>
+                                );
+                              }) : <tr><td colSpan="6" className="py-24 text-center text-slate-300 italic text-sm tracking-widest text-center">目前查無符合條件之計畫資料</td></tr>}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'report' && (
+                <div className="space-y-6 animate-in fade-in duration-300 text-left">
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4 text-left">
+                    <div className="space-y-1 text-left flex-1 min-w-[140px]">
+                      <label className="text-[10px] md:text-xs font-black text-slate-400 uppercase ml-1 tracking-widest leading-none">選擇醫院科部</label>
+                      <select className="w-full px-3 py-2.5 border-slate-200 border-2 rounded-xl text-sm font-bold bg-slate-50 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-left" value={reportUnit} onChange={(e) => setReportUnit(e.target.value)}>
+                        <option value="">-- 請選擇科部 --</option>
+                        {uniqueHospUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1 text-left flex-1 min-w-[140px]">
+                      <label className="text-[10px] md:text-xs font-black text-slate-400 uppercase ml-1 tracking-widest leading-none">指定報表年度</label>
+                      <select className="w-full px-3 py-2.5 border-slate-200 border-2 rounded-xl text-sm font-bold bg-slate-50 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-left" value={reportYear} onChange={(e) => setReportYear(e.target.value)}>
+                        <option value="">歷年總計</option>
+                        {uniqueYears.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                    {/* 🌟 報表層級新增歸屬類別篩選 */}
+                    <div className="space-y-1 text-left flex-1 min-w-[140px]">
+                      <label className="text-[10px] md:text-xs font-black text-slate-400 uppercase ml-1 tracking-widest leading-none">報表歸屬類別</label>
+                      <select className="w-full px-3 py-2.5 border-slate-200 border-2 rounded-xl text-sm font-bold bg-slate-50 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-left" value={reportCategory} onChange={(e) => setReportCategory(e.target.value)}>
+                        <option value="">全部類別</option>
+                        {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1 text-left flex-1 min-w-[180px]">
+                      <label className="text-[10px] md:text-xs font-black text-slate-400 uppercase ml-1 tracking-widest leading-none">多年期計算方式</label>
+                      <select className="w-full px-3 py-2.5 border-slate-200 border-2 rounded-xl text-sm font-bold bg-slate-50 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-left" value={multiYearMode} onChange={(e) => setMultiYearMode(e.target.value)}>
+                        <option value="all">包含所有年度計畫</option>
+                        <option value="first_year_only">僅計算首年 (排除MY2起)</option>
+                      </select>
+                    </div>
+                    <button onClick={() => window.print()} disabled={!reportUnit} className="h-[46px] px-6 rounded-xl bg-slate-800 text-white text-sm font-black hover:bg-black transition active:scale-95 disabled:opacity-50 shadow-md flex items-center justify-center whitespace-nowrap">
+                      <span className="material-symbols-outlined mr-2 text-xl font-bold">print</span>列印報表
+                    </button>
+                  </div>
+
+                  <div className="w-full text-left">
+                    {loading ? (
+                       <div className="bg-white p-24 rounded-3xl border border-slate-200 text-center shadow-lg">
+                         <span className="material-symbols-outlined animate-spin text-7xl text-blue-500 mb-6 font-black">sync</span>
+                         <p className="font-black text-slate-400 uppercase tracking-widest text-sm md:text-lg text-center">報表分析載入中...</p>
+                       </div>
+                    ) : (
+                      <Fragment>
+                        {reportData ? (
+                          <div className="bg-white p-6 sm:p-10 rounded-[2rem] shadow-xl border border-slate-200 print:border-none print:shadow-none print:p-0 text-left">
+                            <div className="border-b-4 border-blue-900 pb-8 mb-10 text-center">
+                              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 mb-3 tracking-tighter uppercase leading-tight text-center">單位申請與核定概況分析報表</h2>
+                              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-slate-500 font-black text-xs sm:text-base text-center">
+                                <span className="flex items-center bg-slate-100 px-4 py-1.5 rounded-xl shadow-inner text-left"><span className="material-symbols-outlined text-lg mr-2 text-blue-600 text-left font-bold">domain</span>{reportUnit}</span>
+                                <span className="w-2 h-2 bg-slate-300 rounded-full hidden sm:block"></span>
+                                <span className="flex items-center bg-slate-100 px-4 py-1.5 rounded-xl shadow-inner text-left"><span className="material-symbols-outlined text-lg mr-2 text-blue-600 font-bold text-left">calendar_today</span>{reportYear ? `${reportYear} 年度` : '歷年總計'}</span>
+                                {reportCategory && (
+                                  <Fragment>
+                                    <span className="w-2 h-2 bg-slate-300 rounded-full hidden sm:block"></span>
+                                    <span className="flex items-center bg-slate-100 px-4 py-1.5 rounded-xl shadow-inner text-left"><span className="material-symbols-outlined text-lg mr-2 text-blue-600 font-bold text-left">category</span>{reportCategory}</span>
+                                  </Fragment>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-10 text-left">
+                              <div className="bg-blue-600 rounded-2xl p-6 text-white flex items-center shadow-xl border-b-8 border-blue-800 text-left">
+                                <span className="material-symbols-outlined text-4xl md:text-5xl opacity-40 mr-4 font-black text-left">verified_user</span>
+                                <div className="text-left">
+                                  <p className="text-[10px] md:text-xs font-black text-blue-100 uppercase tracking-widest mb-1 leading-none italic text-left">已核定件數</p>
+                                  <p className="text-3xl md:text-4xl font-black mt-1 leading-none text-left">{reportData.totalApproved} <span className="text-base font-normal text-blue-200 text-left">件</span></p>
+                                </div>
+                              </div>
+                              <div className="bg-indigo-600 rounded-2xl p-6 text-white flex items-center relative overflow-hidden shadow-xl border-b-8 border-indigo-800 text-left text-left">
+                                <span className="material-symbols-outlined text-4xl md:text-5xl opacity-40 mr-4 font-black text-left text-left">edit_note</span>
+                                <div className="z-10 text-left text-left text-left">
+                                  <p className="text-[10px] md:text-xs font-black text-indigo-100 uppercase tracking-widest mb-1 leading-none italic text-left text-left">總申請件數</p>
+                                  <p className="text-3xl md:text-4xl font-black mt-1 leading-none text-left text-left">{reportData.appliedCount} <span className="text-base font-normal text-indigo-200 text-left text-left">件</span></p>
+                                </div>
+                              </div>
+                              <div className="bg-emerald-600 rounded-2xl p-6 text-white flex items-center relative overflow-hidden shadow-xl border-b-8 border-emerald-800 text-left text-left">
+                                <span className="material-symbols-outlined text-4xl md:text-5xl opacity-40 mr-4 font-black text-left text-left">pie_chart</span>
+                                <div className="z-10 text-left text-left text-left">
+                                  <p className="text-[10px] md:text-xs font-black text-emerald-100 uppercase tracking-widest mb-1 leading-none italic text-left text-left">計畫通過率</p>
+                                  <p className="text-3xl md:text-4xl font-black mt-1 leading-none text-left text-left">
+                                    {reportData.appliedCount > 0 ? ((reportData.totalApproved / reportData.appliedCount) * 100).toFixed(1) : '0.0'}
+                                    <span className="text-base md:text-lg font-normal text-emerald-200 text-left text-left ml-1">%</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right mb-12">
+                              <p className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest opacity-80 leading-none inline-block border-b border-slate-200 pb-1">※ 申請件數包含該單位該年度所有申請紀錄</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-16 text-left text-left">
+                              <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 h-[350px] sm:h-[400px] flex flex-col shadow-inner text-left text-left text-left">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 text-left text-left text-left text-left">
+                                  <div className="flex flex-col text-left">
+                                    <h3 className="text-xs md:text-base font-black text-slate-800 uppercase tracking-widest leading-none mb-2 text-left">跨年度趨勢 ({trendMode === 'approved' ? '核定' : '申請'})</h3>
+                                    <div className="flex bg-slate-200 p-1 rounded-lg w-fit text-left">
+                                      <button onClick={() => setTrendMode('approved')} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${trendMode === 'approved' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>核定</button>
+                                      <button onClick={() => setTrendMode('applied')} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${trendMode === 'applied' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>申請</button>
+                                    </div>
+                                  </div>
+                                  <select className="text-[10px] md:text-xs border border-slate-300 rounded-lg px-3 py-1.5 font-black bg-white focus:ring-4 focus:ring-blue-100 outline-none shadow-sm text-left" value={chartResearchType} onChange={(e) => setChartResearchType(e.target.value)}>
+                                    <option value="">所有類型</option>
+                                    {reportData.uniqueResearchTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                                  </select>
+                                </div>
+                                <div className="flex-1 border-b-2 border-slate-200 flex items-end justify-around pb-4 overflow-x-auto custom-scrollbar pt-8 chart-container text-left text-left">
+                                  {reportData.yearStats.map(stat => {
+                                    const value = trendMode === 'approved' ? stat.approved : stat.applied;
+                                    return (
+                                      <div key={stat.year} className="flex flex-col items-center justify-end h-full w-full min-w-[50px] px-1 group relative text-left">
+                                        <span className="text-[10px] md:text-xs font-black text-blue-600 mb-2 leading-none text-left">{value}</span>
+                                        <div className="w-full max-w-[24px] bg-blue-600 rounded-t-lg transition-all duration-700 hover:bg-blue-400 shadow-lg text-left" style={{ height: `${(value / reportData.maxYearValue) * 100}%`, minHeight: '4px' }}></div>
+                                        <span className="text-[10px] md:text-xs font-black text-slate-500 mt-4 whitespace-nowrap leading-none tracking-tighter text-left">{stat.year}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 h-[350px] sm:h-[400px] flex flex-col shadow-inner text-left text-left text-left">
+                                <div className="flex justify-between items-center mb-8 text-left text-left text-left">
+                                  <div className="flex flex-col text-left">
+                                    <h3 className="text-xs md:text-base font-black text-slate-800 uppercase tracking-widest mb-2 leading-none text-left">研究類型分佈 ({typeMode === 'approved' ? '核定' : '申請'})</h3>
+                                    <div className="flex bg-slate-200 p-1 rounded-lg w-fit text-left text-left">
+                                      <button onClick={() => setTypeMode('approved')} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${typeMode === 'approved' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>核定</button>
+                                      <button onClick={() => setTypeMode('applied')} className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${typeMode === 'applied' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>申請</button>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-7 pr-3 text-left text-left text-left">
+                                  {reportData.typeStats.map(stat => {
+                                    const value = typeMode === 'approved' ? stat.approved : stat.applied;
+                                    const total = typeMode === 'approved' ? reportData.totalApproved : reportData.appliedCount;
+                                    return (
+                                      <div key={stat.name} className="text-left text-left">
+                                        <div className="flex justify-between text-xs md:text-sm font-black text-slate-600 mb-2 text-left text-left text-left">
+                                          <span className="truncate mr-4 mobile-wrap leading-tight text-left text-left" title={stat.name}>{stat.name}</span>
+                                          <span className="text-blue-700 shrink-0 font-black leading-tight text-[11px] md:text-base text-left text-left">{value}件 ({total > 0 ? ((value / total) * 100).toFixed(0) : 0}%)</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-2 shadow-inner overflow-hidden text-left text-left">
+                                          <div className="bg-blue-600 h-full rounded-full transition-all duration-1000 shadow-md text-left text-left" style={{ width: `${(value / reportData.maxTypeValue) * 100}%` }}></div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="page-break-before-print print:break-before-page overflow-x-auto text-left text-left text-left">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6 mb-10 text-left text-left text-left">
+                                <div className="text-left text-left text-left text-left">
+                                    <h3 className="text-base md:text-xl font-black text-slate-800 border-l-8 border-blue-900 pl-5 uppercase leading-none text-left tracking-wider">單位計畫明細清單</h3>
+                                    <div className="flex items-center space-x-6 text-[10px] md:text-xs font-black mt-4 ml-5 text-left text-left text-left">
+                                      <span className="text-slate-400 italic uppercase text-left text-left text-left">狀態圖例：</span>
+                                      <span className="flex items-center text-green-600 font-black text-left text-left text-left"><span className="material-symbols-outlined text-lg mr-1.5 font-black text-left">check_circle</span>已核定</span>
+                                      <span className="flex items-center text-slate-400 font-black text-left text-left text-left"><span className="material-symbols-outlined text-lg mr-1.5 font-black text-left">cancel</span>未核定</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-4 items-end text-left w-full sm:w-auto text-left text-left text-left">
+                                    <div className="space-y-1 text-left flex-1 min-w-[120px]">
+                                      <label className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase block mb-1 ml-1 tracking-widest leading-none text-left text-left text-left">核定狀態</label>
+                                      <select 
+                                        className="w-full px-4 py-2 border-slate-200 border-2 rounded-xl text-xs font-black bg-slate-50 focus:ring-4 focus:ring-blue-100 outline-none shadow-sm text-left"
+                                        value={reportListFilterStatus}
+                                        onChange={(e) => setReportListFilterStatus(e.target.value)}
+                                      >
+                                        <option value="all">全部狀態</option>
+                                        <option value="approved">✅ 已核定</option>
+                                        <option value="rejected">❌ 未核定</option>
+                                      </select>
+                                    </div>
+                                    <div className="space-y-1 text-left flex-1 min-w-[160px]">
+                                      <label className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase block mb-1 ml-1 tracking-widest leading-none text-left text-left text-left">研究類型過濾</label>
+                                      <select 
+                                        className="w-full px-4 py-2 border-slate-200 border-2 rounded-xl text-xs font-black bg-slate-50 focus:ring-4 focus:ring-blue-100 outline-none shadow-sm text-left" 
+                                        value={reportListFilterType} 
+                                        onChange={(e) => setReportListFilterType(e.target.value)}
+                                      >
+                                        <option value="">所有研究類型</option>
+                                        {reportData.listUniqueTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                                      </select>
+                                    </div>
+                                </div>
+                              </div>
+                              
+                              <table className="w-full border-collapse rounded-2xl overflow-hidden shadow-sm text-left text-left text-left text-left">
+                                <thead className="bg-slate-100 text-[10px] md:text-xs font-black text-slate-400 uppercase border-b border-slate-200 text-left text-left text-left text-left">
+                                  <tr>
+                                    <th className="px-4 py-3 border-x border-slate-200 text-center w-16 text-left">年度</th>
+                                    <th className="px-4 py-3 border-x border-slate-200 w-24 md:w-32 text-left text-left text-left text-left text-left">主持人</th>
+                                    <th className="px-4 py-3 border-x border-slate-200 w-16 text-center text-left text-left">狀態</th>
+                                    <th className="px-4 py-3 border-x border-slate-200 text-left text-left text-left text-left text-left">計畫完整名稱 (含類別與編號)</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="text-xs md:text-base divide-y divide-slate-100 text-left text-left text-left text-left">
+                                  {filteredReportList.length > 0 ? filteredReportList.map((item, idx) => {
+                                    const isMultiYear = /MY/i.test(item['計畫編號'] || '');
+                                    return (
+                                    <tr key={idx} className="hover:bg-slate-50 transition-colors text-left text-left text-left">
+                                      <td className="px-4 py-3 border-x border-slate-200 text-center font-black text-slate-500 whitespace-nowrap text-[10px] md:text-xs text-left">{formatYear(item['年度'])}</td>
+                                      <td className="px-4 py-3 border-x border-slate-200 font-black text-slate-900 whitespace-nowrap text-left text-left text-left text-left text-left text-left">{item['主持人']}</td>
+                                      <td className="px-4 py-3 border-x border-slate-200 text-center text-left text-left text-left text-left">
+                                        {item._status === '已核定' ? <span className="material-symbols-outlined text-green-600 text-2xl font-black text-left text-left">check_circle</span> : <span className="material-symbols-outlined text-slate-300 text-2xl font-black text-left text-left text-left">cancel</span>}
+                                      </td>
+                                      <td className="px-4 py-3 border-x border-slate-200 leading-relaxed text-left font-medium text-slate-700 text-left text-left text-left text-left text-left">
+                                        <div className="font-black text-slate-800 mobile-wrap text-xs md:text-base mb-1.5 text-left text-left text-left">
+                                          {/* 🌟 插入類別與多年期標籤 */}
+                                          {getCategoryBadge(item._category)}
+                                          {isMultiYear && (
+                                            <span className="inline-block bg-purple-100 text-purple-700 border border-purple-200 px-1 py-0.5 rounded text-[10px] font-black mr-1.5 ml-1.5 align-text-bottom leading-none" title="包含 MY 之多年期計畫">多</span>
+                                          )}
+                                          <span className={item._category !== '國科會計畫' ? "ml-1.5" : ""}>{item['計畫名稱']}</span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2 text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-tighter mt-0.5 text-left text-left text-left">
+                                          <span className="font-mono text-blue-600/80 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 text-left text-left text-left">{item['計畫編號'] || '無編號'}</span>
+                                          <span className="text-left text-left text-left">{item['研究類型']}</span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}) : <tr><td colSpan="4" className="py-24 text-center text-slate-300 italic text-base md:text-lg font-black tracking-widest uppercase opacity-60 leading-none text-left text-left text-left text-left text-center">該分類狀態下目前無計畫數據資料</td></tr>}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-white p-24 rounded-[3.5rem] border-4 border-dashed border-slate-300 text-center shadow-inner text-left text-left text-left text-left text-center">
+                            <span className="material-symbols-outlined text-slate-200 text-8xl block mb-6 opacity-40 font-black text-center text-center text-center text-center">analytics</span>
+                            <h3 className="text-lg md:text-xl font-black text-slate-400 uppercase tracking-[0.2em] leading-loose text-center text-center text-center text-center text-center">請由上方選單<br className="sm:hidden"/>選擇醫院科部以啟動自動化分析</h3>
+                          </div>
+                        )}
+                      </Fragment>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </main>
+
+          <footer className="bg-white border-t border-slate-200 py-10 text-center print:hidden mt-auto shadow-inner font-sans text-left text-left text-left">
+            <div className="max-w-7xl mx-auto px-4 text-center space-y-4 text-center text-center text-center text-center text-center">
+              <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest leading-relaxed opacity-80 text-center text-center text-center text-center text-center">© 2026 台大醫院 醫學研究部 All rights reserved.</p>
+              
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] md:text-xs text-slate-500 font-black uppercase text-center text-center text-center text-center text-center">
+                <div className="flex items-center text-center text-center text-center text-center text-center text-center"><span className="material-symbols-outlined text-base mr-1.5 font-bold text-slate-300 text-center text-center text-center text-center text-center text-center">construction</span>系統建置: 醫學研究部 陳巧瑜管理師</div>
+                <div className="flex items-center gap-1.5 text-center text-center text-center text-center text-center text-center text-center">
+                  <span className="material-symbols-outlined text-base font-bold text-slate-300 text-center text-center text-center text-center text-center text-center text-center">mail</span>
+                  <a href="mailto:summerchen@ntuh.gov.tw" className="text-blue-400 hover:text-blue-600 underline underline-offset-4 decoration-2 transition-all text-center text-center text-center text-center text-center text-center text-center">summerchen@ntuh.gov.tw</a>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center bg-slate-50 px-6 py-2 rounded-full border border-slate-100 shadow-sm transition-all hover:bg-white text-[10px] md:text-xs font-black text-slate-400 italic tracking-tight text-center text-center text-center text-center text-center">
+                 <span className="material-symbols-outlined text-sm md:text-base mr-2 text-slate-300 font-black text-center text-center text-center text-center text-center text-center">source</span>
+                 資料來源: 國科會 2025/09/15 | 人事室 2025/01/21
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
