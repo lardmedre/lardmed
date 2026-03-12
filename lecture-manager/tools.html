@@ -1282,7 +1282,8 @@ function generateAnn() {
   // ── Plain text ──
   let txt = '';
   if (series) txt += `【台大醫院醫學研究部_${series}】\n\n`;
-  txt += `講題：${topic}\n講者：${spk}\n`;
+  txt += `講題：${topic}\n講者：${speaker}\n`;
+  if (affil) txt += `講者單位：${affil}\n`;
   if (abstract) txt += `\n演講摘要：\n${abstract}\n`;
   txt += `\n時間：${datetime}\n地點：${venue}\n`;
   if (regurl) txt += `報名網址：${regurl}\n`;
@@ -1292,7 +1293,7 @@ function generateAnn() {
   document.getElementById('ann-text-out').textContent = annText;
 
   // ── Build reminder emails ──
-  generateReminderEmails({ topic, spk, speaker, affil, datetime, venue, org, contact, regurl, series });
+  generateReminderEmails({ topic, speaker, affil, spk, datetime, venue, org, contact, regurl, series });
 }
 
 /* ══════════════════════════════════
@@ -1378,10 +1379,11 @@ function copyDoc(mod) {
    REMINDER EMAIL GENERATOR
 ══════════════════════════════════ */
 function buildMetaBlock(data) {
-  const { topic, spk, datetime, venue, org, contact, regurl } = data;
+  const { topic, speaker, affil, datetime, venue, org, contact, regurl } = data;
   let rows = '';
   rows += `<div class="meta-row"><span class="mk">講題</span><span>${topic}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">講者</span><span>${spk}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">講者</span><span>${speaker}</span></div>`;
+  if (affil) rows += `<div class="meta-row"><span class="mk">講者單位</span><span>${affil}</span></div>`;
   rows += `<div class="meta-row"><span class="mk">時間</span><span>${datetime}</span></div>`;
   rows += `<div class="meta-row"><span class="mk">地點</span><span>${venue}</span></div>`;
   if (org) rows += `<div class="meta-row"><span class="mk">主辦</span><span>${org}</span></div>`;
@@ -1391,10 +1393,11 @@ function buildMetaBlock(data) {
 }
 
 function buildMetaText(data) {
-  const { topic, spk, datetime, venue, org, contact, regurl } = data;
+  const { topic, speaker, affil, datetime, venue, org, contact, regurl } = data;
   let t = '';
   t += `講題：${topic}\n`;
-  t += `講者：${spk}\n`;
+  t += `講者：${speaker}\n`;
+  if (affil) t += `講者單位：${affil}\n`;
   t += `時間：${datetime}\n`;
   t += `地點：${venue}\n`;
   if (org) t += `主辦單位：${org}\n`;
@@ -1453,7 +1456,7 @@ ${contact || '醫學研究部 敬上'}</div>
   const speakerSubject = `[講師提醒] ${shortDate} ${shortTime} ${topic}`;
   const noteLines = [
     `當天${contact ? contact.replace(/醫學研究部\s?/, '') : sender}會提早半小時至${venue}進行前置作業，如您有準備PPT也可提前寄給我或提早至講堂測試投影片。`,
-    `因該講堂設備關係建議使用現場講桌電腦播放。`,
+    `講堂設備僅提供HDMI接頭，如為APPLE Mac系統請自備轉接頭，因該講堂設備關係建議使用現場講桌電腦播放。`,
     `本院將準備微薄的講座鐘點費感謝您受邀前來，敬請攜帶收款存摺影本，當天會請您簽收鐘點費與錄影授權書，鐘點費後續將由本院出納組撥款。`
   ];
 
