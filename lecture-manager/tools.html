@@ -335,18 +335,37 @@ body {
 
 .bulk-hint { font-size: 11px; color: #4a7c59; margin-top: 3px; min-height: 14px; }
 
-.person-list-hdr { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 5px; }
-.person-list-hdr span { font-size: 11.5px; color: var(--ink-muted); }
-.clr-btn { background: none; border: 1px solid #e0a0a0; color: #cc4444; font-size: 11px; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; }
+.person-list-hdr { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 5px; gap: 6px; }
+.person-list-hdr > span { font-size: 11.5px; color: var(--ink-muted); flex-shrink: 0; }
+.clr-btn { background: none; border: 1px solid #e0a0a0; color: #cc4444; font-size: 11px; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; flex-shrink: 0; }
 .clr-btn:hover { background: #fde8e8; }
+
+/* Sort controls */
+.sort-controls { display: flex; gap: 3px; align-items: center; }
+.sort-chip {
+  padding: 2px 7px; border-radius: 20px; font-size: 10.5px; font-weight: 500;
+  border: 1px solid var(--rule); background: white; color: var(--ink-muted);
+  cursor: pointer; transition: all 0.13s; white-space: nowrap;
+  font-family: 'Noto Sans TC', sans-serif; line-height: 1.6;
+  display: flex; align-items: center; gap: 2px;
+}
+.sort-chip:hover { border-color: var(--accent-muted); color: var(--accent); }
+.sort-chip.active { background: var(--navy); border-color: var(--navy); color: white; }
+.sort-chip .sort-arrow { font-size: 9px; opacity: 0.7; }
+.sort-chip.active .sort-arrow { opacity: 1; }
 
 .person-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; margin-bottom: 12px; }
 .ptag {
   display: flex; align-items: center; justify-content: space-between;
   background: white; border: 1px solid var(--rule);
   border-radius: 3px; padding: 6px 10px; font-size: 12px;
-  animation: fadeIn 0.18s ease;
+  animation: fadeIn 0.18s ease; cursor: grab; user-select: none;
 }
+.ptag:active { cursor: grabbing; }
+.ptag.dragging { opacity: 0.4; border-style: dashed; }
+.ptag.drag-over { border-color: var(--accent); background: rgba(196,93,62,0.04); }
+.ptag-drag-handle { color: var(--rule); font-size: 13px; margin-right: 6px; cursor: grab; flex-shrink: 0; line-height: 1; }
+.ptag-drag-handle:hover { color: var(--ink-muted); }
 @keyframes fadeIn { from { opacity:0; transform: translateY(-3px); } to { opacity:1; transform: translateY(0); } }
 .ptag-info { display: flex; flex-direction: column; gap: 1px; }
 .ptag-name { font-weight: 500; color: var(--navy); font-size: 12.5px; }
@@ -833,7 +852,12 @@ body {
 
         <div class="person-list-hdr" id="pl-hdr" style="display:none">
           <span id="pl-count">共 0 位</span>
-          <button class="clr-btn" onclick="clearAll()">🗑 全部清除</button>
+          <div class="sort-controls">
+            <button class="sort-chip active" id="sort-unit" onclick="setSort('unit',this)" title="依單位→姓名排序">單位 <span class="sort-arrow">↑</span></button>
+            <button class="sort-chip" id="sort-name" onclick="setSort('name',this)" title="依姓名排序">姓名 <span class="sort-arrow">↑</span></button>
+            <button class="sort-chip" id="sort-manual" onclick="setSort('manual',this)" title="手動拖曳排序">自訂</button>
+          </div>
+          <button class="clr-btn" onclick="clearAll()" title="全部清除">🗑</button>
         </div>
         <div class="person-list" id="person-list"></div>
       </div>
@@ -1555,7 +1579,37 @@ function clearAll() {
   persons=[]; renderPersonList(); renderSheet();
 }
 
+/* ══════════════════════════════════
+   SORT STATE
+══════════════════════════════════ */
+let sortMode = 'unit'; // 'unit' | 'name' | 'manual'
+let manualOrder = [];
+
+function setSort(mode, el) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (mode === 'manual') {
+    manualOrder = sortedPersons().map(p => p.id);
+  }
+  renderPersonList();
+  renderSheet();
+}
+
 function sortedPersons() {
+  if (sortMode === 'name') {
+    return [...persons].sort((a,b) => a.name.localeCompare(b.name,'zh-TW'));
+  }
+  if (sortMode === 'manual') {
+    if (!manualOrder.length) return [...persons];
+    const idMap = {};
+    persons.forEach(p => { idMap[p.id] = p; });
+    const ordered = manualOrder.map(id => idMap[id]).filter(Boolean);
+    const inOrder = new Set(manualOrder);
+    persons.forEach(p => { if (!inOrder.has(p.id)) ordered.push(p); });
+    return ordered;
+  }
+  // Default: unit → name
   return [...persons].sort((a,b) => {
     const uc = a.unit.localeCompare(b.unit,'zh-TW');
     return uc!==0 ? uc : a.name.localeCompare(b.name,'zh-TW');
@@ -1570,14 +1624,56 @@ function renderPersonList() {
   document.getElementById('pl-count').textContent = `共 ${persons.length} 位`;
   const nameCounts={};
   persons.forEach(p => { nameCounts[p.name]=(nameCounts[p.name]||0)+1; });
-  list.innerHTML = persons.map(p => `
-    <div class="ptag${nameCounts[p.name]>1?' dup':''}">
-      <div class="ptag-info">
+  const sorted = sortedPersons();
+  const isDraggable = sortMode === 'manual';
+  list.innerHTML = sorted.map(p => `
+    <div class="ptag${nameCounts[p.name]>1?' dup':''}" data-id="${p.id}"
+      ${isDraggable ? 'draggable="true"' : ''}>
+      ${isDraggable ? '<span class="ptag-drag-handle" title="拖曳調整順序">⠿</span>' : ''}
+      <div class="ptag-info" style="flex:1">
         <span class="ptag-name">${p.name}${nameCounts[p.name]>1?'<span class="dup-badge">重複</span>':''}</span>
         <span class="ptag-unit">${p.unit}</span>
       </div>
       <button class="ptag-rm" onclick="removePerson(${p.id})">✕</button>
     </div>`).join('');
+  if (isDraggable) initDragSort(list);
+}
+
+/* ── Drag-to-sort ── */
+let dragSrcId = null;
+
+function initDragSort(list) {
+  list.querySelectorAll('.ptag').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragSrcId = parseInt(el.dataset.id);
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      list.querySelectorAll('.ptag').forEach(t => t.classList.remove('drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      list.querySelectorAll('.ptag').forEach(t => t.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetId = parseInt(el.dataset.id);
+      if (dragSrcId === targetId) return;
+      const cur = sortedPersons().map(p => p.id);
+      const fromIdx = cur.indexOf(dragSrcId);
+      const toIdx = cur.indexOf(targetId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      cur.splice(fromIdx, 1);
+      cur.splice(toIdx, 0, dragSrcId);
+      manualOrder = cur;
+      renderPersonList();
+      renderSheet();
+    });
+  });
 }
 
 /* ══════════════════════════════════
