@@ -608,20 +608,23 @@ body {
   body:not(.print-namecard) .out-panel { display: block; }
   body:not(.print-namecard) .out-panel:not(#sp-preview) { display: none !important; }
   body:not(.print-namecard) .sheet-wrap { box-shadow: none; border: none; }
-  body:not(.print-namecard) .sheet-hdr { background: white !important; color: black !important; padding: 10px 20px; border-bottom: 2px solid black; }
-  body:not(.print-namecard) .sheet-title-txt { font-size: 18px !important; letter-spacing: 3px; color: black !important; }
-  body:not(.print-namecard) .sheet-subtitle-txt { color: #444 !important; font-size: 10px !important; }
-  body:not(.print-namecard) .sheet-meta-bar { background: white !important; padding: 8px 20px; border-bottom: 1px solid black; gap: 28px; }
+  body:not(.print-namecard) .sheet-tbl-wrap { padding: 0; }
+  body:not(.print-namecard) .sheet-tbl { font-size: 14px; }
+  body:not(.print-namecard) .sheet-tbl thead { display: table-header-group; }
+  /* Header row: title + meta bar inside thead td */
+  body:not(.print-namecard) .sheet-hdr-row td { padding: 0 !important; background: white !important; }
+  body:not(.print-namecard) .sheet-hdr { background: white !important; color: black !important; padding: 8px 20px 4px; border-bottom: none; }
+  body:not(.print-namecard) .sheet-title-txt { font-size: 17px !important; letter-spacing: 3px; color: black !important; }
+  body:not(.print-namecard) .sheet-subtitle-txt { color: #444 !important; font-size: 9px !important; }
+  body:not(.print-namecard) .sheet-meta-bar { background: white !important; padding: 4px 20px 6px; border-bottom: 2px solid black; border-top: none; gap: 28px; }
   body:not(.print-namecard) .sm-lbl { color: black !important; font-weight: 700; }
   body:not(.print-namecard) .sm-item { color: black !important; font-size: 12px; }
-  body:not(.print-namecard) .sheet-tbl-wrap { padding: 8px 20px; }
-  body:not(.print-namecard) .sheet-tbl { font-size: 16px; }
-  body:not(.print-namecard) .sheet-tbl thead { display: table-header-group; }
-  body:not(.print-namecard) .sheet-tbl thead tr { background: #444 !important; }
-  body:not(.print-namecard) .sheet-tbl thead th { color: white !important; }
+  /* Column header row */
+  body:not(.print-namecard) .sheet-col-hdr { background: #444 !important; }
+  body:not(.print-namecard) .sheet-col-hdr th { color: white !important; padding: 5px 10px; font-family: 'Noto Serif TC', serif; }
   body:not(.print-namecard) .sheet-tbl tbody tr { border-bottom: 1px solid #ccc !important; background: white !important; }
   body:not(.print-namecard) .sheet-tbl tbody tr:nth-child(even) { background: white !important; }
-  body:not(.print-namecard) .sheet-tbl td { background: white !important; }
+  body:not(.print-namecard) .sheet-tbl td { background: white !important; padding: 5px 10px; }
   body:not(.print-namecard) .sig-box { width: 110px; height: 22px; }
   /* Namecard print mode */
   body.print-namecard #nc-print-area {
@@ -732,9 +735,22 @@ body {
           </div>
         </div>
 
-        <div class="fg"><label>地點 <span class="req">*</span></label><input type="text" id="a-venue" placeholder="例：台大醫院西址第七講堂"></div>
+        <div class="fg">
+          <label>地點 <span class="req">*</span></label>
+          <select id="a-venue-sel" onchange="handleVenueSel('a-venue-sel','a-venue-custom','a-venue')">
+            <option value="">請選擇地點</option>
+            <option value="台大醫院西址第七講堂">台大醫院西址第七講堂</option>
+            <option value="台大醫學院101講堂">台大醫學院101講堂</option>
+            <option value="台大醫學院102講堂">台大醫學院102講堂</option>
+            <option value="台大醫學院103講堂">台大醫學院103講堂</option>
+            <option value="台大醫學院202講堂">台大醫學院202講堂</option>
+            <option value="__custom__">其他（自訂輸入）</option>
+          </select>
+          <input type="text" id="a-venue-custom" placeholder="請輸入地點" style="display:none;margin-top:6px" oninput="syncVenue('a-venue-custom','a-venue')">
+          <input type="hidden" id="a-venue">
+        </div>
         <div class="fg"><label>主辦單位</label><input type="text" id="a-org" value="醫學研究部"></div>
-        <div class="fg"><label>承辦人員</label><input type="text" id="a-contact" placeholder="例：醫學研究部 陳巧瑜管理師(分機263254)"></div>
+        <div class="fg"><label>承辦人員</label><input type="text" id="a-contact" value="醫學研究部 陳巧瑜管理師(分機263254)"></div>
       </div>
 
       <div class="sb-divider"></div>
@@ -794,9 +810,22 @@ body {
           </div>
         </div>
 
-        <div class="fg"><label>地點 <span class="req">*</span></label><input type="text" id="p-venue" placeholder="例：台大醫院西址第七講堂"></div>
+        <div class="fg">
+          <label>地點 <span class="req">*</span></label>
+          <select id="p-venue-sel" onchange="handleVenueSel('p-venue-sel','p-venue-custom','p-venue')">
+            <option value="">請選擇地點</option>
+            <option value="台大醫院西址第七講堂">台大醫院西址第七講堂</option>
+            <option value="台大醫學院101講堂">台大醫學院101講堂</option>
+            <option value="台大醫學院102講堂">台大醫學院102講堂</option>
+            <option value="台大醫學院103講堂">台大醫學院103講堂</option>
+            <option value="台大醫學院202講堂">台大醫學院202講堂</option>
+            <option value="__custom__">其他（自訂輸入）</option>
+          </select>
+          <input type="text" id="p-venue-custom" placeholder="請輸入地點" style="display:none;margin-top:6px" oninput="syncVenue('p-venue-custom','p-venue')">
+          <input type="hidden" id="p-venue">
+        </div>
         <div class="fg"><label>主辦單位</label><input type="text" id="p-org" value="醫學研究部"></div>
-        <div class="fg"><label>承辦人員</label><input type="text" id="p-contact" placeholder="例：醫學研究部 陳巧瑜管理師(分機263254)"></div>
+        <div class="fg"><label>承辦人員</label><input type="text" id="p-contact" value="醫學研究部 陳巧瑜管理師(分機263254)"></div>
       </div>
 
       <div class="sb-divider"></div>
@@ -823,7 +852,20 @@ body {
         <div class="sb-label">活動資訊</div>
         <div class="fg"><label>簽到表標題</label><input type="text" id="s-title" value="臺大醫院醫學研究部學術演講簽到表"></div>
         <div class="fg"><label>日期 <span class="req">*</span></label><input type="date" id="s-date"></div>
-        <div class="fg"><label>地點</label><input type="text" id="s-venue" placeholder="例：台大醫院西址第七講堂"></div>
+        <div class="fg">
+          <label>地點</label>
+          <select id="s-venue-sel" onchange="handleVenueSel('s-venue-sel','s-venue-custom','s-venue');renderSheet()">
+            <option value="">請選擇地點</option>
+            <option value="台大醫院西址第七講堂">台大醫院西址第七講堂</option>
+            <option value="台大醫學院101講堂">台大醫學院101講堂</option>
+            <option value="台大醫學院102講堂">台大醫學院102講堂</option>
+            <option value="台大醫學院103講堂">台大醫學院103講堂</option>
+            <option value="台大醫學院202講堂">台大醫學院202講堂</option>
+            <option value="__custom__">其他（自訂輸入）</option>
+          </select>
+          <input type="text" id="s-venue-custom" placeholder="請輸入地點" style="display:none;margin-top:6px" oninput="syncVenue('s-venue-custom','s-venue');renderSheet()">
+          <input type="hidden" id="s-venue">
+        </div>
       </div>
 
       <div class="sb-divider"></div>
@@ -1517,9 +1559,26 @@ function switchItab(mode) {
 }
 
 // listen on sign-in fields
-['s-title','s-date','s-venue'].forEach(id => {
+['s-title','s-date'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderSheet);
 });
+
+/* ── Venue dropdown helpers ── */
+function handleVenueSel(selId, customId, hiddenId) {
+  const sel = document.getElementById(selId);
+  const custom = document.getElementById(customId);
+  const hidden = document.getElementById(hiddenId);
+  if (sel.value === '__custom__') {
+    custom.style.display = '';
+    hidden.value = custom.value;
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value;
+  }
+}
+function syncVenue(customId, hiddenId) {
+  document.getElementById(hiddenId).value = document.getElementById(customId).value;
+}
 document.getElementById('s-bulk').addEventListener('input', () => {
   const txt = document.getElementById('s-bulk').value;
   const { results, errors } = parseBulk(txt);
@@ -1720,21 +1779,27 @@ function renderSheet() {
 
   document.getElementById('sheet-output').innerHTML = `
     <div class="sheet-wrap">
-      <div class="sheet-hdr">
-        <div class="sheet-title-txt">${title}</div>
-        <div class="sheet-subtitle-txt">National Taiwan University Hospital · Department of Medical Research</div>
-      </div>
-      <div class="sheet-meta-bar">
-        <div class="sm-item"><span class="sm-lbl">日期</span>${dateStr}</div>
-        <div class="sm-item"><span class="sm-lbl">地點</span>${location}</div>
-        <div class="sm-item"><span class="sm-lbl">人數</span>${persons.length} 人</div>
-        ${catHTML}
-      </div>
-      <div class="sheet-tbl-wrap">
+      <div class="sheet-tbl-wrap" style="padding:0">
         <table class="sheet-tbl">
-          <thead><tr>
-            <th style="width:40px">編號</th><th>姓名</th><th>單位</th><th>簽名</th>
-          </tr></thead>
+          <thead>
+            <tr class="sheet-hdr-row">
+              <td colspan="4" style="padding:0">
+                <div class="sheet-hdr">
+                  <div class="sheet-title-txt">${title}</div>
+                  <div class="sheet-subtitle-txt">National Taiwan University Hospital · Department of Medical Research</div>
+                </div>
+                <div class="sheet-meta-bar">
+                  <div class="sm-item"><span class="sm-lbl">日期</span>${dateStr}</div>
+                  <div class="sm-item"><span class="sm-lbl">地點</span>${location}</div>
+                  <div class="sm-item"><span class="sm-lbl">人數</span>${persons.length} 人</div>
+                  ${catHTML}
+                </div>
+              </td>
+            </tr>
+            <tr class="sheet-col-hdr">
+              <th style="width:40px">編號</th><th>姓名</th><th>單位</th><th>簽名</th>
+            </tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
