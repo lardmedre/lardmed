@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>115年度研究營 滿意度調查報表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --warm-white: #FFFEF9;
+    --terracotta: #C5694F;
+    --terracotta-light: #E8A48F;
+    --terracotta-pale: #F5DDD5;
+    --brown-deep: #5C3D2E;
+    --brown-mid: #8B6557;
+    --brown-light: #C4A89A;
+    --gold: #C9993A;
+    --gold-light: #F0D080;
+    --sage: #7A9E7E;
+    --sage-light: #B8D4BB;
+    --text-primary: #2C1810;
+    --text-secondary: #6B4C3B;
+    --text-muted: #A0837A;
+    --border: #E8D5CC;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--brown-deep);
+    padding: 48px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent, transparent 30px,
+      rgba(255,255,255,0.02) 30px, rgba(255,255,255,0.02) 31px
+    );
+  }
+  .header-inner {
+    max-width: 1100px; margin: 0 auto; position: relative;
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--terracotta);
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+  .header h1 {
+    font-family: 'Noto Serif TC', serif;
+    color: var(--cream);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+  .header-sub {
+    color: var(--brown-light);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  .header-meta {
+    margin-top: 20px;
+    display: flex; gap: 28px; flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--terracotta-light);
+    font-size: 13px;
+  }
+  .meta-icon { font-size: 16px; }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1100px; margin: 0 auto; padding: 36px 24px;
+  }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--brown-deep);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--terracotta);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .icon { font-size: 18px; }
+
+  /* ── KEY STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .stat-card {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--terracotta);
+  }
+  .stat-card.green::after { background: var(--sage); }
+  .stat-card.gold::after { background: var(--gold); }
+  .stat-card.blue::after { background: #7A9BBE; }
+  .stat-number {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--brown-deep);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-number span { font-size: 18px; color: var(--terracotta); }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--terracotta);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ── TWO-COL GRID ── */
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-bottom: 24px;
+  }
+  .grid-3 {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  /* ── SATISFACTION OVERALL ── */
+  .satisfaction-ring {
+    text-align: center; padding: 12px 0 20px;
+  }
+  .ring-wrap {
+    display: inline-block; position: relative; width: 140px; height: 140px;
+    margin-bottom: 14px;
+  }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .ring-pct {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 30px; font-weight: 700; color: var(--brown-deep);
+    line-height: 1;
+  }
+  .ring-pct-sub { font-size: 11px; color: var(--text-muted); }
+  .ring-legend {
+    display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  /* ── SCORE BARS ── */
+  .score-list { display: flex; flex-direction: column; gap: 12px; }
+  .score-item {}
+  .score-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px;
+  }
+  .score-label { font-size: 13px; color: var(--text-secondary); }
+  .score-val {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 15px; font-weight: 700; color: var(--brown-deep);
+  }
+  .score-bar-bg {
+    height: 8px; background: var(--border); border-radius: 4px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--terracotta), var(--terracotta-light));
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+  }
+  .score-bar-fill.green {
+    background: linear-gradient(90deg, var(--sage), var(--sage-light));
+  }
+
+  /* ── DONUT / PIE ── */
+  .donut-row {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .donut-svg { flex-shrink: 0; }
+  .donut-legend { flex: 1; min-width: 120px; }
+  .donut-legend-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);
+  }
+  .donut-legend-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .donut-legend-pct {
+    margin-left: auto; font-weight: 600; color: var(--brown-deep); font-size: 13px;
+  }
+
+  /* ── HORIZONTAL BAR CHART ── */
+  .hbar-list { display: flex; flex-direction: column; gap: 10px; }
+  .hbar-item {}
+  .hbar-header {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;
+  }
+  .hbar-count { font-weight: 600; color: var(--brown-deep); }
+  .hbar-bg {
+    height: 22px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .hbar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--terracotta), var(--gold-light));
+    display: flex; align-items: center; padding-left: 8px;
+    font-size: 11px; color: #fff; font-weight: 500;
+    transition: width 1.4s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── LECTURE TABLE ── */
+  .lecture-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .lecture-table th {
+    background: var(--brown-deep);
+    color: var(--cream);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  .lecture-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .lecture-table tr:hover td {
+    background: var(--terracotta-pale);
+  }
+  .lecture-table tr:last-child td { border-bottom: none; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 11px; font-weight: 700;
+    color: #fff;
+    background: var(--brown-light);
+  }
+  .rank-badge.top3 { background: var(--terracotta); }
+  .bar-mini-wrap { width: 80px; }
+  .bar-mini-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar-mini-fill {
+    height: 100%; border-radius: 3px;
+    background: var(--terracotta);
+  }
+
+  /* ── FEEDBACK CARDS ── */
+  .feedback-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .feedback-bubble {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--terracotta);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    position: relative;
+  }
+  .feedback-bubble::before {
+    content: '❝';
+    position: absolute; top: 8px; right: 12px;
+    font-size: 20px; color: var(--terracotta-pale);
+  }
+
+  /* ── SUGGESTION ── */
+  .suggest-card {
+    border-left: 3px solid var(--gold);
+    background: #FFFBF0;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+
+  /* ── TIME PREF ── */
+  .time-bars { display: flex; gap: 12px; align-items: flex-end; justify-content: center; padding: 16px 0; }
+  .time-bar-item { text-align: center; }
+  .time-bar-rect-wrap { display: flex; justify-content: center; align-items: flex-end; height: 80px; margin-bottom: 6px; }
+  .time-bar-rect {
+    width: 50px; border-radius: 4px 4px 0 0;
+    background: var(--terracotta);
+    transition: height 1s ease;
+  }
+  .time-bar-rect.grey { background: var(--border); }
+  .time-bar-label { font-size: 11px; color: var(--text-muted); }
+  .time-bar-count { font-size: 13px; font-weight: 700; color: var(--brown-deep); margin-top: 2px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--brown-deep);
+    color: var(--brown-light);
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    margin-top: 48px;
+    letter-spacing: 1px;
+  }
+
+  /* ── ANIMATION ── */
+  .animate-in {
+    opacity: 0; transform: translateY(16px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .d1 { animation-delay: 0.1s; }
+  .d2 { animation-delay: 0.2s; }
+  .d3 { animation-delay: 0.3s; }
+  .d4 { animation-delay: 0.4s; }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .feedback-grid { grid-template-columns: 1fr; }
+    .lecture-table .bar-mini-wrap { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-badge">SATISFACTION REPORT</div>
+    <h1>115年度 台大醫院醫學研究部 研究營<br>滿意度調查結果報表</h1>
+    <div class="header-sub">National Taiwan University Hospital · Department of Medical Research</div>
+    <div class="header-meta">
+      <div class="meta-item"><span class="meta-icon">📅</span> 2026年3月6–7日</div>
+      <div class="meta-item"><span class="meta-icon">📋</span> 有效問卷 29 份</div>
+      <div class="meta-item"><span class="meta-icon">🏥</span> 4 個院區</div>
+      <div class="meta-item"><span class="meta-icon">🎤</span> 19 場次課程</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- KEY STATS -->
+  <div class="stats-row">
+    <div class="stat-card animate-in d1">
+      <div class="stat-number">29</div>
+      <div class="stat-label">有效回覆人數</div>
+      <div class="stat-sub">4 個院區參與</div>
+    </div>
+    <div class="stat-card green animate-in d2">
+      <div class="stat-number">86<span>%</span></div>
+      <div class="stat-label">非常滿意比例</div>
+      <div class="stat-sub">25 / 29 人</div>
+    </div>
+    <div class="stat-card gold animate-in d3">
+      <div class="stat-number">4.71<span>/5</span></div>
+      <div class="stat-label">各項指標平均分</div>
+      <div class="stat-sub">課程 + 場地服務</div>
+    </div>
+    <div class="stat-card blue animate-in d4">
+      <div class="stat-number">93<span>%</span></div>
+      <div class="stat-label">認為對研究有幫助</div>
+      <div class="stat-sub">27 / 29 人</div>
+    </div>
+  </div>
+
+  <!-- ROW 1: 整體滿意度 + 院區分布 + 參加身分 -->
+  <div class="grid-3">
+
+    <!-- 整體滿意度 -->
+    <div class="card animate-in d1">
+      <div class="section-title"><span class="icon">⭐</span>整體滿意度</div>
+      <div class="satisfaction-ring">
+        <div class="ring-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <!-- bg circle -->
+            <circle cx="70" cy="70" r="54" fill="none" stroke="#E8D5CC" stroke-width="14"/>
+            <!-- 非常滿意: 25/29 = 86.2% → 339.29 / 339.29 circumference = 2π*54=339.29 -->
+            <circle cx="70" cy="70" r="54" fill="none" stroke="#C5694F" stroke-width="14"
+              stroke-dasharray="292.5 46.8" stroke-linecap="round"/>
+            <!-- 滿意: 4/29 = 13.8% -->
+            <circle cx="70" cy="70" r="54" fill="none" stroke="#F0D080" stroke-width="14"
+              stroke-dasharray="46.8 292.5"
+              stroke-dashoffset="-292.5" stroke-linecap="round"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-pct">100%</div>
+            <div class="ring-pct-sub">正向回饋</div>
+          </div>
+        </div>
+        <div class="ring-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--terracotta)"></span>非常滿意 25人 (86%)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--gold-light)"></span>滿意 4人 (14%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 服務院區 -->
+    <div class="card animate-in d2">
+      <div class="section-title"><span class="icon">🏥</span>服務院區分布</div>
+      <div class="hbar-list">
+        <div class="hbar-item">
+          <div class="hbar-header"><span>總院</span><span class="hbar-count">17 人</span></div>
+          <div class="hbar-bg"><div class="hbar-fill" style="width:58.6%">58.6%</div></div>
+        </div>
+        <div class="hbar-item">
+          <div class="hbar-header"><span>分院（雲林）</span><span class="hbar-count">6 人</span></div>
+          <div class="hbar-bg"><div class="hbar-fill" style="width:20.7%">20.7%</div></div>
+        </div>
+        <div class="hbar-item">
+          <div class="hbar-header"><span>分院（癌醫）</span><span class="hbar-count">3 人</span></div>
+          <div class="hbar-bg"><div class="hbar-fill" style="width:10.3%">10.3%</div></div>
+        </div>
+        <div class="hbar-item">
+          <div class="hbar-header"><span>分院（新竹）</span><span class="hbar-count">3 人</span></div>
+          <div class="hbar-bg"><div class="hbar-fill" style="width:10.3%">10.3%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 參加身分 -->
+    <div class="card animate-in d3">
+      <div class="section-title"><span class="icon">👤</span>參加身分</div>
+      <div style="padding: 10px 0;">
+        <div class="donut-row">
+          <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#E8D5CC" stroke-width="20"/>
+            <!-- 醫事護理: 24/29=82.8% → 226.19 → 187.2 -->
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#C5694F" stroke-width="20"
+              stroke-dasharray="187.2 39.0" stroke-linecap="butt" transform="rotate(-90 50 50)"/>
+            <!-- 受邀講者: 4/29=13.8% → 31.2 -->
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#C9993A" stroke-width="20"
+              stroke-dasharray="31.2 195.0" stroke-dashoffset="-187.2"
+              stroke-linecap="butt" transform="rotate(-90 50 50)"/>
+            <!-- 醫師學員: 1/29=3.4% → 7.7 -->
+            <circle cx="50" cy="50" r="36" fill="none" stroke="#7A9E7E" stroke-width="20"
+              stroke-dasharray="7.7 218.5" stroke-dashoffset="-218.4"
+              stroke-linecap="butt" transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="donut-legend">
+            <div class="donut-legend-row">
+              <span class="donut-legend-dot" style="background:var(--terracotta)"></span>
+              <span>醫事、護理、技術人員</span>
+              <span class="donut-legend-pct">24人</span>
+            </div>
+            <div class="donut-legend-row">
+              <span class="donut-legend-dot" style="background:var(--gold)"></span>
+              <span>受邀講者</span>
+              <span class="donut-legend-pct">4人</span>
+            </div>
+            <div class="donut-legend-row">
+              <span class="donut-legend-dot" style="background:var(--sage)"></span>
+              <span>醫師學員</span>
+              <span class="donut-legend-pct">1人</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: 課程評分 + 場地/生活評分 -->
+  <div class="grid-2">
+
+    <!-- 課程評分 -->
+    <div class="card animate-in d1">
+      <div class="section-title"><span class="icon">📚</span>課程內容評分（滿分 5 分）</div>
+      <div class="score-list">
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">課程規劃完整性</span><span class="score-val">4.76</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:95.2%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">講題時間規劃</span><span class="score-val">4.72</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:94.4%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">內容吸引力</span><span class="score-val">4.69</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:93.8%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">講題實用性</span><span class="score-val">4.66</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:93.2%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">講題難易度</span><span class="score-val">4.66</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:93.2%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 場地/服務評分 -->
+    <div class="card animate-in d2">
+      <div class="section-title"><span class="icon">🏨</span>場地與服務評分（滿分 5 分）</div>
+      <div class="score-list">
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">場地舒適性</span><span class="score-val">4.86</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill green" style="width:97.2%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">服務品質</span><span class="score-val">4.86</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill green" style="width:97.2%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">用餐環境品質</span><span class="score-val">4.72</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill green" style="width:94.4%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">住宿舒適度</span><span class="score-val">4.69</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill green" style="width:93.8%"></div></div>
+        </div>
+        <div class="score-item">
+          <div class="score-header"><span class="score-label">交通便利性</span><span class="score-val">4.45</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill green" style="width:89.0%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 課程受歡迎程度 -->
+  <div class="card animate-in d1" style="margin-bottom:24px;">
+    <div class="section-title"><span class="icon">🏆</span>最有收穫課程排行（複選，共 29 人填答）</div>
+    <table class="lecture-table">
+      <thead>
+        <tr>
+          <th style="width:42px;">排名</th>
+          <th>課程名稱</th>
+          <th style="width:60px;text-align:right;">提及次數</th>
+          <th style="width:100px;">熱度</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="rank-badge top3">1</span></td>
+          <td>生成式 AI 輔助研究懶人包（莊又丞 資訊工程師）</td>
+          <td style="text-align:right;font-weight:700;color:var(--terracotta);">23</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:100%;background:var(--terracotta);"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge top3">2</span></td>
+          <td>研究傳播工具：視覺化設計與可近用性評估（張育瑄 主治醫師）</td>
+          <td style="text-align:right;font-weight:700;color:var(--terracotta);">17</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:74%;background:var(--terracotta-light);"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge top3">3</span></td>
+          <td>護理部分享（鄭靜宜 護理師）</td>
+          <td style="text-align:right;font-weight:700;">15</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:65%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">4</span></td>
+          <td>讓教學被看見：臨床教師教學研究之路（楊志偉 副主任）</td>
+          <td style="text-align:right;">14</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:61%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">4</span></td>
+          <td>讓種子發光：總分院育苗計畫分享（楊偉勛 教授 / 李志國 助理教授）</td>
+          <td style="text-align:right;">14</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:61%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">4</span></td>
+          <td>使用醫療整合資料創新研發（李宜家 副主任）</td>
+          <td style="text-align:right;">14</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:61%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">4</span></td>
+          <td>臨床與基礎研究的選擇（林頌然 主任）</td>
+          <td style="text-align:right;">14</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:61%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">8</span></td>
+          <td>院內研究資源－共同研究室與研究服務核心（蔡芷季 組長）</td>
+          <td style="text-align:right;">11</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:48%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">8</span></td>
+          <td>院內計畫簡介懶人包（楊鎧鍵 組長）</td>
+          <td style="text-align:right;">11</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:48%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">8</span></td>
+          <td>個人研究與出國進修分享（鐘桂彬 助理教授）</td>
+          <td style="text-align:right;">11</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:48%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">11</span></td>
+          <td>醫師與醫事人員科學家之倫理素養（蔡甫昌 主任）</td>
+          <td style="text-align:right;">10</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:43%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">11</span></td>
+          <td>檢驗醫學部分享（陳怡婷 醫檢師）</td>
+          <td style="text-align:right;">10</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:43%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">13</span></td>
+          <td>從站穩腳步到精益求精：個人永續發展之路（陳慧玲 主任）</td>
+          <td style="text-align:right;">9</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:39%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">14</span></td>
+          <td>科研創新 × 專利思維：專利申請與技轉實務（楊宗霖 副研發長）</td>
+          <td style="text-align:right;">8</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:35%;"></div></div></div></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge">15</span></td>
+          <td>透過生醫設計流程解決臨床問題（黃博浩 副教授）</td>
+          <td style="text-align:right;">7</td>
+          <td><div class="bar-mini-wrap"><div class="bar-mini-bg"><div class="bar-mini-fill" style="width:30%;"></div></div></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ROW 3: 研究幫助 + 找到夥伴 + 建議時間 -->
+  <div class="grid-3">
+    <!-- 對研究有幫助 -->
+    <div class="card animate-in d1">
+      <div class="section-title"><span class="icon">🔬</span>對研究有幫助？</div>
+      <div style="display:flex; justify-content:center; gap:24px; padding:16px 0;">
+        <div style="text-align:center;">
+          <div style="font-size:40px; font-family:'Noto Serif TC'; font-weight:700; color:var(--sage);">93%</div>
+          <div style="font-size:12px; color:var(--text-muted);">有 (27人)</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:40px; font-family:'Noto Serif TC'; font-weight:700; color:var(--brown-light);">7%</div>
+          <div style="font-size:12px; color:var(--text-muted);">無意見 (2人)</div>
+        </div>
+      </div>
+      <div style="background:var(--sage-light);border-radius:4px;padding:10px 14px;font-size:12px;color:#3D6B41;text-align:center;">
+        ✅ 無人填答「無幫助」
+      </div>
+    </div>
+
+    <!-- 找到合作夥伴 -->
+    <div class="card animate-in d2">
+      <div class="section-title"><span class="icon">🤝</span>找到合作夥伴</div>
+      <div style="display:flex; justify-content:center; gap:24px; padding:16px 0;">
+        <div style="text-align:center;">
+          <div style="font-size:40px; font-family:'Noto Serif TC'; font-weight:700; color:var(--terracotta);">14%</div>
+          <div style="font-size:12px; color:var(--text-muted);">有 (4人)</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:40px; font-family:'Noto Serif TC'; font-weight:700; color:var(--brown-light);">86%</div>
+          <div style="font-size:12px; color:var(--text-muted);">否 (25人)</div>
+        </div>
+      </div>
+      <div style="background:var(--terracotta-pale);border-radius:4px;padding:10px 14px;font-size:12px;color:var(--brown-deep);text-align:center;">
+        已媒合者合作夥伴人數：2人
+      </div>
+    </div>
+
+    <!-- 建議辦理時間 -->
+    <div class="card animate-in d3">
+      <div class="section-title"><span class="icon">📅</span>建議辦理時間</div>
+      <div class="time-bars">
+        <div class="time-bar-item">
+          <div class="time-bar-rect-wrap">
+            <div class="time-bar-rect" style="height:68px;"></div>
+          </div>
+          <div class="time-bar-label">周五至周六</div>
+          <div class="time-bar-count">13人</div>
+        </div>
+        <div class="time-bar-item">
+          <div class="time-bar-rect-wrap">
+            <div class="time-bar-rect grey" style="height:68px;"></div>
+          </div>
+          <div class="time-bar-label">無意見</div>
+          <div class="time-bar-count">13人</div>
+        </div>
+        <div class="time-bar-item">
+          <div class="time-bar-rect-wrap">
+            <div class="time-bar-rect" style="height:24px;background:var(--gold);"></div>
+          </div>
+          <div class="time-bar-label">周間</div>
+          <div class="time-bar-count">3人</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 學員回饋精選 -->
+  <div class="card animate-in d1" style="margin-bottom:24px;">
+    <div class="section-title"><span class="icon">💬</span>最觸動講者回饋（精選）</div>
+    <div class="feedback-grid">
+      <div class="feedback-bubble">莊又丞工程師：當今AI發展神速，各種模型推陳出新，如果不是透過又丞工程師的分享，很多資訊都不清楚，雖然這次主題都是環繞研究展開，但AI的運用遠遠不止於研究，執業過程甚至是日常生活都能夠善加利用，真的收穫很多！</div>
+      <div class="feedback-bubble">張育瑄醫師的演講，讓我反思過去在教材設計上的想法，總以為畫面繽紛、元素多，能吸引學習者的注意力；但演講中指出，過度的視覺刺激反而可能分散注意力，這樣的觀點也促使我重新思考如何在避免過度裝飾下，提升閱讀投入程度。</div>
+      <div class="feedback-bubble">提醒未來研究可避免碰壁及經驗分享，讓學員在研究路上能更順利達成目標。除了鼓勵之外，還提供很多資源，可以讓有想法、但不知道怎麼開始的人，有繼續往下走的動力。</div>
+      <div class="feedback-bubble">林頌然主任分享，有笑傲江湖的風格；黃博浩醫師的分享讓我們跨出臨床的思維，相當鼓舞人心！感謝總院辦理豐富的研究營，豐富所有與會者的台大生涯～</div>
+      <div class="feedback-bubble">整個研究營的課程安排很讚，使我思考及增進對臨床觀察可納為研究的題材！視覺化設計與可近性評估，明確且淺顯易懂，非常吸引人，更在往後製作PPT時的提醒！</div>
+      <div class="feedback-bubble">林頌然、鍾桂彬親身體驗與分享，有講到榮耀背後的艱辛歷程，和持續修正目標、找力量、找資源的過程很觸動我；張育瑄、莊又丞題目符合潮流，帶入很多實用的觀念。</div>
+    </div>
+  </div>
+
+  <!-- 未來建議 -->
+  <div class="card animate-in d2">
+    <div class="section-title"><span class="icon">💡</span>學員未來建議</div>
+    <div class="suggest-card">場地環境舒適，在短暫課程期間也能獲得身心放鬆。密集課程帶來一定程度的資訊負荷，但在與同儕交流討論的過程中，激盪出許多與臨床業務改善相關的研究靈感。</div>
+    <div class="suggest-card">可以比照這次的活動，時間規劃、邀請的講師及地點都非常的棒。</div>
+    <div class="suggest-card">經驗分享有點太多，覺得可以有一些實際計劃寫作的教學，以提高課程實用性。</div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  115年度 台大醫院醫學研究部研究營 · 滿意度調查統計報表 · 製表：陳巧瑜 · 2026/03/23
+</div>
+
+<script>
+  // Animate bars on load
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.score-bar-fill, .hbar-fill').forEach(el => {
+      const w = el.style.width;
+      el.style.width = '0';
+      setTimeout(() => { el.style.width = w; }, 300);
+    });
+  });
+</script>
+</body>
+</html>
