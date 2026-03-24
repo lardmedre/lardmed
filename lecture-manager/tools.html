@@ -717,7 +717,20 @@ body {
 
       <div class="sb-section">
         <div class="sb-label">基本資訊</div>
-        <div class="fg"><label>系列課程名稱（如有）</label><input type="text" id="a-series" placeholder="例：生成式AI工具輔助論文寫作系列課程"></div>
+
+        <div class="fg">
+          <label>系列課程名稱</label>
+          <select id="a-series-sel" onchange="handleSeriesSel('a-series-sel','a-series-custom','a-series')">
+            <option value="">（無）</option>
+            <option value="台大醫院醫學研究部專題演講">台大醫院醫學研究部專題演講</option>
+            <option value="台大醫院大師專題演講">台大醫院大師專題演講</option>
+            <option value="台大醫院生成式AI工具輔助論文寫作系列課程">台大醫院生成式AI工具輔助論文寫作系列課程</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="a-series-custom" placeholder="請輸入系列課程名稱" style="display:none;margin-top:6px" oninput="syncVenue('a-series-custom','a-series')">
+          <input type="hidden" id="a-series">
+        </div>
+
         <div class="fg"><label>講題 <span class="req">*</span></label><input type="text" id="a-topic" placeholder="請輸入演講題目"></div>
         <div class="fg"><label>講者姓名 <span class="req">*</span></label><input type="text" id="a-speaker" placeholder="例：李季青副教授"></div>
         <div class="fg"><label>講者單位</label><input type="text" id="a-affil" placeholder="例：長庚大學資訊工程系"></div>
@@ -751,6 +764,24 @@ body {
         </div>
         <div class="fg"><label>主辦單位</label><input type="text" id="a-org" value="醫學研究部"></div>
         <div class="fg"><label>承辦人員</label><input type="text" id="a-contact" value="醫學研究部 陳巧瑜管理師(分機263254)"></div>
+
+        <div class="fg">
+          <label>時數認證申請</label>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);font-weight:400;cursor:pointer">
+              <input type="checkbox" id="cert-lifelong" style="accent-color:var(--accent);width:13px;height:13px"> 公務人員終身學習時數
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);font-weight:400;cursor:pointer">
+              <input type="checkbox" id="cert-teacher" style="accent-color:var(--accent);width:13px;height:13px"> 師資培育課程認證
+            </label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);font-weight:400;cursor:pointer;flex-shrink:0">
+                <input type="checkbox" id="cert-other" style="accent-color:var(--accent);width:13px;height:13px"> 其他：
+              </label>
+              <input type="text" id="cert-other-text" placeholder="請說明" style="flex:1;border:1px solid var(--rule);border-radius:3px;padding:4px 8px;font-size:12px;background:white;outline:none">
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="sb-divider"></div>
@@ -792,7 +823,20 @@ body {
 
       <div class="sb-section">
         <div class="sb-label">基本資訊</div>
-        <div class="fg"><label>系列課程名稱（如有）</label><input type="text" id="p-series" placeholder="例：生成式AI工具輔助論文寫作系列課程"></div>
+
+        <div class="fg">
+          <label>系列課程名稱</label>
+          <select id="p-series-sel" onchange="handleSeriesSel('p-series-sel','p-series-custom','p-series')">
+            <option value="">（無）</option>
+            <option value="台大醫院醫學研究部專題演講">台大醫院醫學研究部專題演講</option>
+            <option value="台大醫院大師專題演講">台大醫院大師專題演講</option>
+            <option value="台大醫院生成式AI工具輔助論文寫作系列課程">台大醫院生成式AI工具輔助論文寫作系列課程</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="p-series-custom" placeholder="請輸入系列課程名稱" style="display:none;margin-top:6px" oninput="syncVenue('p-series-custom','p-series')">
+          <input type="hidden" id="p-series">
+        </div>
+
         <div class="fg"><label>講題 <span class="req">*</span></label><input type="text" id="p-topic" placeholder="請輸入演講題目"></div>
         <div class="fg"><label>講者姓名 <span class="req">*</span></label><input type="text" id="p-speaker" placeholder="例：李季青副教授"></div>
         <div class="fg"><label>講者單位</label><input type="text" id="p-affil" placeholder="例：長庚大學資訊工程系"></div>
@@ -832,11 +876,57 @@ body {
 
       <div class="sb-section">
         <div class="sb-label">會後專用</div>
-        <div class="fg"><label>主持人</label><input type="text" id="p-host" placeholder="例：楊鎧鍵教授"></div>
-        <div class="fg"><label>主持人職稱/單位</label><input type="text" id="p-host-role" placeholder="例：醫學研究部規劃訓練組組長"></div>
+
+        <div class="fg">
+          <label>主持人</label>
+          <select id="p-host-sel" onchange="handleDropdownCustom('p-host-sel','p-host-custom','p-host')">
+            <option value="">請選擇</option>
+            <option value="楊鎧鍵教授">楊鎧鍵教授</option>
+            <option value="黃舒宜博士">黃舒宜博士</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="p-host-custom" placeholder="請輸入主持人" style="display:none;margin-top:6px" oninput="syncVenue('p-host-custom','p-host')">
+          <input type="hidden" id="p-host">
+        </div>
+
+        <div class="fg">
+          <label>主持人職稱/單位</label>
+          <select id="p-host-role-sel" onchange="handleDropdownCustom('p-host-role-sel','p-host-role-custom','p-host-role')">
+            <option value="">請選擇</option>
+            <option value="醫學研究部">醫學研究部</option>
+            <option value="醫學研究部規劃訓練組組長">醫學研究部規劃訓練組組長</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="p-host-role-custom" placeholder="請輸入職稱/單位" style="display:none;margin-top:6px" oninput="syncVenue('p-host-role-custom','p-host-role')">
+          <input type="hidden" id="p-host-role">
+        </div>
+
         <div class="fg"><label>課程錄影連結（限院內）</label><input type="url" id="p-video" placeholder="https://edu.ntuh.gov.tw/course/…"></div>
         <div class="fg"><label>院內課號</label><input type="text" id="p-courseno" placeholder="例：200332"></div>
-        <div class="fg"><label>工作人員</label><input type="text" id="p-staff" placeholder="例：陳巧瑜、高俐婷、范曉寧"></div>
+
+        <div class="fg">
+          <label>工作人員</label>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;margin-bottom:6px" id="staff-checks">
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="陳巧瑜" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 陳巧瑜
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="高俐婷" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 高俐婷
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="邱玉婷" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 邱玉婷
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="范曉寧" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 范曉寧
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="黃舒宜" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 黃舒宜
+            </label>
+          </div>
+          <input type="text" id="p-staff-custom" placeholder="其他工作人員（可加填）" style="width:100%;border:1px solid var(--rule);border-radius:3px;padding:6px 10px;font-size:12px;background:white;outline:none" oninput="updateStaff()">
+          <input type="hidden" id="p-staff">
+        </div>
+
         <div class="fg"><label>補充說明／本部摘要</label><textarea id="p-summary" rows="4" placeholder="說明課程重點與部門規劃（可留空，系統自動生成）…"></textarea></div>
       </div>
 
@@ -1303,6 +1393,21 @@ function generateAnn() {
   const contact = v('a-contact'), abstract = v('a-abstract'), regurl = v('a-regurl');
   const spk = affil ? `${affil} ${speaker}` : speaker;
 
+  // ── Certification ──
+  const certLines = [];
+  if (document.getElementById('cert-lifelong')?.checked) certLines.push('公務人員終身學習時數');
+  if (document.getElementById('cert-teacher')?.checked) certLines.push('師資培育課程認證');
+  const certOtherChk = document.getElementById('cert-other')?.checked;
+  const certOtherTxt = document.getElementById('cert-other-text')?.value.trim();
+  if (certOtherChk && certOtherTxt) certLines.push(certOtherTxt);
+  const certStr = certLines.join('、');
+  const hasCert = certLines.length > 0;
+
+  // ── Early check-in time ──
+  const startTime = document.getElementById('a-time-start')?.value;
+  const earlyTime = subtractHalfHour(startTime);
+  const earlyStr = earlyTime ? `（請提早至 ${earlyTime} 完成簽到）` : '';
+
   // ── Preview HTML ──
   let html = '<div class="ann-hd">';
   if (series) html += `<div class="ann-series">台大醫院醫學研究部＿${series}</div>`;
@@ -1310,13 +1415,25 @@ function generateAnn() {
   html += `<div class="ann-title">${topic}</div>`;
   html += `<div class="ann-speaker">${spk}</div></div>`;
   if (abstract) html += `<div class="ann-abstract"><div class="ann-abstract-lbl">演講摘要</div>${abstract}</div>`;
+
   html += '<div class="ann-meta">';
-  html += `<span class="meta-k">時間</span><span class="meta-v">${datetime}</span>`;
-  html += `<span class="meta-k">地點</span><span class="meta-v">${venue}</span>`;
-  if (regurl) html += `<span class="meta-k">報名網址</span><span class="meta-v"><a href="${regurl}" target="_blank">${regurl}</a></span>`;
-  html += `<span class="meta-k">主辦單位</span><span class="meta-v">${org}</span>`;
-  if (contact) html += `<span class="meta-k">承辦人員</span><span class="meta-v">${contact}</span>`;
+  html += `<span class="meta-k">講題：</span><span class="meta-v">${topic}</span>`;
+  html += `<span class="meta-k">講者：</span><span class="meta-v">${speaker}</span>`;
+  if (affil) html += `<span class="meta-k">講者單位：</span><span class="meta-v">${affil}</span>`;
+  html += `<span class="meta-k">時間 ：</span><span class="meta-v">${datetime}${earlyStr}</span>`;
+  html += `<span class="meta-k">地點：</span><span class="meta-v">${venue}</span>`;
+  if (hasCert) html += `<span class="meta-k">時數認證：</span><span class="meta-v">${certStr}</span>`;
+  html += `<span class="meta-k">主辦單位：</span><span class="meta-v">${org}</span>`;
+  if (contact) html += `<span class="meta-k">承辦人員：</span><span class="meta-v">${contact}</span>`;
+  if (regurl) html += `<span class="meta-k">報名網頁：</span><span class="meta-v"><a href="${regurl}" target="_blank">${regurl}</a></span>`;
   html += '</div>';
+
+  // cert reminder note
+  if (hasCert) {
+    html += `<div class="ann-abstract" style="margin-top:14px;border-left-color:var(--gold)"><div class="ann-abstract-lbl" style="color:var(--gold)">注意事項</div>本課程申請時數認證，請攜帶識別證準時刷卡簽退。</div>`;
+  }
+  html += `<div style="font-size:12px;color:var(--ink-muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule-light);font-family:'Noto Sans TC',sans-serif">備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區</div>`;
+
   document.getElementById('ann-doc-body').innerHTML = html;
   document.getElementById('ann-doc').style.display = '';
   document.getElementById('ann-empty').style.display = 'none';
@@ -1324,18 +1441,23 @@ function generateAnn() {
   // ── Plain text ──
   let txt = '';
   if (series) txt += `【台大醫院醫學研究部_${series}】\n\n`;
-  txt += `講題：${topic}\n講者：${speaker}\n`;
+  txt += `講題：${topic}\n`;
+  txt += `講者：${speaker}\n`;
   if (affil) txt += `講者單位：${affil}\n`;
-  if (abstract) txt += `\n演講摘要：\n${abstract}\n`;
-  txt += `\n時間：${datetime}\n地點：${venue}\n`;
-  if (regurl) txt += `報名網址：${regurl}\n`;
+  txt += `時間 ：${datetime}${earlyStr}\n`;
+  txt += `地點：${venue}\n`;
+  if (hasCert) txt += `時數認證：${certStr}\n`;
   txt += `主辦單位：${org}\n`;
   if (contact) txt += `承辦人員：${contact}\n`;
+  if (regurl) txt += `報名網頁：${regurl}\n`;
+  txt += `\n備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區`;
+  if (hasCert) txt += `\n\n※ 本課程申請時數認證，請攜帶識別證準時刷卡簽退。`;
+  if (abstract) txt += `\n\n演講摘要：\n${abstract}`;
   annText = txt.trim();
   document.getElementById('ann-text-out').textContent = annText;
 
   // ── Build reminder emails ──
-  generateReminderEmails({ topic, speaker, affil, spk, datetime, venue, org, contact, regurl, series });
+  generateReminderEmails({ topic, speaker, affil, spk, datetime, venue, org, contact, regurl, series, certStr, hasCert, earlyStr });
 }
 
 /* ══════════════════════════════════
@@ -1421,30 +1543,32 @@ function copyDoc(mod) {
    REMINDER EMAIL GENERATOR
 ══════════════════════════════════ */
 function buildMetaBlock(data) {
-  const { topic, speaker, affil, datetime, venue, org, contact, regurl } = data;
+  const { topic, speaker, affil, datetime, venue, org, contact, regurl, certStr, earlyStr } = data;
   let rows = '';
-  rows += `<div class="meta-row"><span class="mk">講題</span><span>${topic}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">講者</span><span>${speaker}</span></div>`;
-  if (affil) rows += `<div class="meta-row"><span class="mk">講者單位</span><span>${affil}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">時間</span><span>${datetime}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">地點</span><span>${venue}</span></div>`;
-  if (org) rows += `<div class="meta-row"><span class="mk">主辦</span><span>${org}</span></div>`;
-  if (contact) rows += `<div class="meta-row"><span class="mk">承辦</span><span>${contact}</span></div>`;
-  if (regurl) rows += `<div class="meta-row"><span class="mk">報名</span><span><a href="${regurl}" style="color:var(--accent)">${regurl}</a></span></div>`;
+  rows += `<div class="meta-row"><span class="mk">講題：</span><span>${topic}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">講者：</span><span>${speaker}</span></div>`;
+  if (affil) rows += `<div class="meta-row"><span class="mk">講者單位：</span><span>${affil}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">時間 ：</span><span>${datetime}${earlyStr||''}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">地點：</span><span>${venue}</span></div>`;
+  if (certStr) rows += `<div class="meta-row"><span class="mk">時數認證：</span><span>${certStr}</span></div>`;
+  if (org) rows += `<div class="meta-row"><span class="mk">主辦單位：</span><span>${org}</span></div>`;
+  if (contact) rows += `<div class="meta-row"><span class="mk">承辦人員：</span><span>${contact}</span></div>`;
+  if (regurl) rows += `<div class="meta-row"><span class="mk">報名網頁：</span><span><a href="${regurl}" style="color:var(--accent)">${regurl}</a></span></div>`;
   return `<div class="email-meta-block">${rows}</div>`;
 }
 
 function buildMetaText(data) {
-  const { topic, speaker, affil, datetime, venue, org, contact, regurl } = data;
+  const { topic, speaker, affil, datetime, venue, org, contact, regurl, certStr, earlyStr } = data;
   let t = '';
   t += `講題：${topic}\n`;
   t += `講者：${speaker}\n`;
   if (affil) t += `講者單位：${affil}\n`;
-  t += `時間：${datetime}\n`;
+  t += `時間 ：${datetime}${earlyStr||''}\n`;
   t += `地點：${venue}\n`;
+  if (certStr) t += `時數認證：${certStr}\n`;
   if (org) t += `主辦單位：${org}\n`;
   if (contact) t += `承辦人員：${contact}\n`;
-  if (regurl) t += `報名網址：${regurl}\n`;
+  if (regurl) t += `報名網頁：${regurl}\n`;
   return t;
 }
 
@@ -1459,13 +1583,17 @@ function generateReminderEmails(data) {
   const shortTime = datetime.includes(' ') ? datetime.split(' ').slice(1).join(' ') : '';
 
   // ── STUDENT EMAIL ──
+  const { certStr, hasCert, earlyStr } = data;
   const studentSubject = `[學員提醒] ${shortDate} ${shortTime} ${topic}`;
+  const certReminder = hasCert ? `\n※ 本課程申請時數認證，請攜帶識別證準時刷卡簽退。` : '';
   const studentBodyText =
 `各位報名同仁您好：
 
 提醒您已報名以下講座，敬請準時前往參加，如有任何問題也請回信與承辦人聯絡，謝謝您。
 
 ${buildMetaText(data)}
+備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區${certReminder}
+
 敬祝　 研安
 
 ${contact || '醫學研究部 敬上'}`;
@@ -1486,7 +1614,9 @@ ${contact || '醫學研究部 敬上'}`;
 提醒您已報名以下講座，敬請準時前往參加，如有任何問題也請回信與承辦人聯絡，謝謝您。
 </div>
       ${buildMetaBlock(data)}
-      <div class="email-body">敬祝　 研安
+      <div class="email-body">備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區${hasCert ? `\n\n<strong>※ 本課程申請時數認證，請攜帶識別證準時刷卡簽退。</strong>` : ''}
+
+敬祝　 研安
 
 ${contact || '醫學研究部 敬上'}</div>
     </div>
@@ -1578,6 +1708,51 @@ function handleVenueSel(selId, customId, hiddenId) {
 }
 function syncVenue(customId, hiddenId) {
   document.getElementById(hiddenId).value = document.getElementById(customId).value;
+}
+
+/* ── Series dropdown helper ── */
+function handleSeriesSel(selId, customId, hiddenId) {
+  const sel = document.getElementById(selId);
+  const custom = document.getElementById(customId);
+  const hidden = document.getElementById(hiddenId);
+  if (sel.value === '__custom__') {
+    custom.style.display = '';
+    hidden.value = custom.value;
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value;
+  }
+}
+
+/* ── Generic dropdown+custom helper ── */
+function handleDropdownCustom(selId, customId, hiddenId) {
+  const sel = document.getElementById(selId);
+  const custom = document.getElementById(customId);
+  const hidden = document.getElementById(hiddenId);
+  if (sel.value === '__custom__') {
+    custom.style.display = '';
+    hidden.value = custom.value;
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value;
+  }
+}
+
+/* ── Staff checkbox builder ── */
+function updateStaff() {
+  const checked = [...document.querySelectorAll('#staff-checks input:checked')].map(cb => cb.value);
+  const extra = document.getElementById('p-staff-custom')?.value.trim() || '';
+  const all = extra ? [...checked, extra] : checked;
+  document.getElementById('p-staff').value = all.join('、');
+}
+
+/* ── Time: subtract 30 min for early check-in ── */
+function subtractHalfHour(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const total = h * 60 + m - 30;
+  const nh = Math.floor(total / 60), nm = total % 60;
+  return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`;
 }
 document.getElementById('s-bulk').addEventListener('input', () => {
   const txt = document.getElementById('s-bulk').value;
