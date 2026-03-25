@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>經費估算表計算小工具｜醫學研究部</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#faf7f2;
+  --surface:#ffffff;
+  --surface-2:#f5f1ea;
+  --border:#e0d8cc;
+  --border-mid:#d4c9b8;
+
+  --blue:#7a6555;
+  --blue-dark:#5c4a3a;
+  --blue-mid:#9a8472;
+  --blue-soft:#f0ebe1;
+  --blue-pale:#faf7f2;
+
+  --accent:#c45d3e;
+  --accent-soft:#f4e6e0;
+
+  --green:#16a34a;
+  --green-soft:#dcfce7;
+  --green-border:#86efac;
+
+  --amber:#d97706;
+  --amber-soft:#fef3c7;
+  --amber-border:#fcd34d;
+
+  --red:#dc2626;
+  --red-soft:#fee2e2;
+  --red-border:#fca5a5;
+
+  --disabled-bg:#f0ebe1;
+  --disabled-text:#b5a895;
+  --disabled-border:#e0d8cc;
+
+  --text-main:#2c2520;
+  --text-mid:#6b5f54;
+  --text-soft:#9a8e82;
+  
+
+  --shadow:0 1px 8px rgba(44,37,32,0.06);
+  --shadow-lg:0 6px 32px rgba(44,37,32,0.1);
+  --r:16px; --r-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text-main);min-height:100vh;padding-bottom:80px;}
+
+/* Header */
+.header{background:linear-gradient(135deg,#5c4a3a 0%,#7a6555 60%,#9a8472 100%);color:white;padding:20px 28px 16px;box-shadow:0 2px 16px rgba(92,74,58,0.3);}
+.header h1{font-size:1.15rem;font-weight:700;letter-spacing:.03em;display:flex;align-items:center;gap:9px;}
+.header p{font-size:.72rem;opacity:.72;margin-top:4px;letter-spacing:.05em;}
+.header .back-link{display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,0.8);font-size:.72rem;text-decoration:none;margin-bottom:8px;padding:4px 10px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;transition:all .15s;}
+.header .back-link:hover{background:rgba(255,255,255,0.15);color:white;}
+
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 0;}
+
+/* Cards */
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);padding:18px 20px;margin-bottom:14px;}
+.card-head{display:flex;align-items:center;gap:8px;font-size:.83rem;font-weight:700;color:var(--blue);letter-spacing:.04em;padding-bottom:11px;border-bottom:1px solid var(--border);margin-bottom:13px;}
+.num-tag{background:var(--blue);color:white;font-size:.68rem;font-weight:700;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* Form */
+.row{display:grid;gap:12px;margin-bottom:12px;}
+.row.col2{grid-template-columns:1fr 1fr;}
+.row.col3{grid-template-columns:1fr 1fr 1fr;}
+@media(max-width:560px){.row.col2,.row.col3{grid-template-columns:1fr;}}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text-mid);margin-bottom:5px;}
+.field label .hint{font-size:.72rem;font-weight:400;color:var(--text-soft);margin-left:4px;}
+select,input[type="number"],input[type="text"]{width:100%;padding:9px 11px;border:1.5px solid var(--border-mid);border-radius:var(--r-sm);font-family:'Noto Sans TC',sans-serif;font-size:.83rem;color:var(--text-main);background:var(--surface-2);transition:border-color .18s,box-shadow .18s;appearance:none;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23003D79' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;cursor:pointer;}
+select:focus,input:focus{outline:none;border-color:var(--blue-mid);box-shadow:0 0 0 3px rgba(0,87,168,0.15);}
+input[readonly]{background:var(--disabled-bg);color:var(--text-soft);}
+
+/* ── Standard banners ── */
+.std-banner{border-radius:var(--r-sm);padding:9px 13px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px;border:1.5px solid;}
+.std-banner.active-std{background:var(--blue-soft);border-color:#a8c0f8;color:var(--blue);}
+.std-banner.inactive-std{background:var(--disabled-bg);border-color:var(--disabled-border);color:var(--disabled-text);}
+.std-banner .sb-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+.std-banner .sb-title{font-size:.78rem;font-weight:700;line-height:1.4;}
+.std-banner .sb-sub{font-size:.72rem;margin-top:2px;line-height:1.5;opacity:.85;}
+.std-banner.inactive-std .sb-title::after{content:'（本次不適用）';font-weight:400;margin-left:6px;font-size:.72rem;}
+.std-link{font-size:.72rem;font-weight:600;color:inherit;opacity:.85;text-decoration:none;border-bottom:1px dashed currentColor;white-space:nowrap;margin-left:6px;}
+.std-link:hover{opacity:1;border-bottom-style:solid;}
+.active-std .std-link{color:var(--blue);}
+.inactive-std .std-link{color:var(--disabled-text);}
+
+/* ── Item rows ── */
+.item-grid{display:grid;gap:8px;}
+.item-row{border-radius:var(--r-sm);padding:11px 14px;transition:border-color .2s;border:1.5px solid var(--border-mid);background:var(--surface);}
+.item-row:has(input:focus){border-color:var(--blue-mid);box-shadow:0 0 0 3px rgba(0,87,168,0.1);}
+
+.item-inner{display:grid;grid-template-columns:1fr auto 150px;align-items:center;gap:10px;}
+@media(max-width:620px){.item-inner{grid-template-columns:1fr 120px;}}
+
+.item-name{font-size:.83rem;font-weight:600;color:var(--text-mid);display:block;}
+
+.input-wrap{position:relative;}
+.input-wrap .prefix{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--text-soft);pointer-events:none;}
+.input-wrap input{padding-left:28px;}
+
+.lim-badge{font-size:.72rem;padding:4px 10px;border-radius:20px;text-align:center;white-space:nowrap;font-weight:600;}
+.lim-badge.neutral{background:var(--bg);color:var(--text-soft);border:1px solid var(--border);}
+.lim-badge.ok{background:var(--green-soft);color:var(--green);}
+.lim-badge.warn{background:var(--red-soft);color:var(--red);}
+
+.item-note{font-size:.72rem;color:var(--text-soft);margin-top:6px;line-height:1.6;}
+
+/* Currency toggle */
+.cur-toggle{display:flex;border:1.5px solid var(--border-mid);border-radius:var(--r-sm);overflow:hidden;width:fit-content;}
+.cur-toggle button{padding:5px 12px;font-size:.75rem;font-weight:600;font-family:'Noto Sans TC',sans-serif;border:none;background:var(--surface-2);color:var(--text-soft);cursor:pointer;transition:all .15s;}
+.cur-toggle button.cur-active{background:var(--blue);color:white;}
+
+/* B02 sub */
+.sub-card{background:var(--blue-pale);border:1.5px solid #c0d0f8;border-radius:var(--r-sm);padding:13px 15px;margin-top:8px;}
+.sub-title{font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:10px;}
+
+/* Info / warn */
+.info-box{background:var(--accent-soft);border-radius:var(--r-sm);padding:8px 12px;font-size:.72rem;color:#0369a1;line-height:1.6;margin-top:6px;}
+.warn-box{background:var(--red-soft);border:1px solid var(--red-border);border-radius:var(--r-sm);padding:8px 12px;font-size:.72rem;color:var(--red);margin-top:6px;}
+.hidden{display:none!important;}
+
+/* Summary */
+.summary-card{background:linear-gradient(135deg,#5c4a3a 0%,#7a6555 60%,#9a8472 100%);border-radius:var(--r);color:white;padding:22px 24px;margin-bottom:14px;box-shadow:var(--shadow-lg);}
+.summary-card h2{font-size:.88rem;opacity:.78;letter-spacing:.08em;margin-bottom:14px;}
+.total-row{display:flex;align-items:baseline;gap:8px;margin-bottom:18px;}
+.total-row .lbl{font-size:.85rem;opacity:.75;}
+.total-row .amt{font-size:2rem;font-weight:700;color:#93c5fd;}
+.total-row .unit{font-size:.85rem;opacity:.75;}
+.s-rows{display:grid;gap:5px;}
+.s-row{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.1);border-radius:8px;padding:7px 12px;font-size:.8rem;}
+.s-row .s-name{opacity:.85;}
+.s-row .s-val{font-weight:600;color:#93c5fd;}
+.s-row.over .s-val{color:#fca5a5;}
+.s-warn{background:rgba(252,165,165,.18);border-radius:8px;padding:8px 12px;font-size:.73rem;color:#fca5a5;margin-top:10px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:30px;font-family:'Noto Sans TC',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;letter-spacing:.04em;}
+.btn-primary{background:white;color:var(--blue);box-shadow:0 3px 12px rgba(0,0,0,.15);}
+.btn-primary:hover{background:#f0f4ff;transform:translateY(-1px);}
+.btn-ghost{background:rgba(255,255,255,.12);color:white;border:1.5px solid rgba(255,255,255,.3);}
+.btn-ghost:hover{background:rgba(255,255,255,.22);}
+
+/* ── Deep Geng items panel ── */
+.shen-panel{margin-top:12px;background:var(--blue-soft);border:1.5px solid #a8c0f8;border-radius:var(--r-sm);padding:12px 16px;display:none;}
+.shen-panel.show{display:block;}
+
+/* ── Alert / Notice boxes ── */
+.alert-row{display:grid;gap:10px;margin-top:12px;}
+.alert-row.col2{grid-template-columns:1fr 1fr;}
+@media(max-width:560px){.alert-row.col2{grid-template-columns:1fr;}}
+.notice-box{border-radius:var(--r-sm);padding:11px 14px;display:flex;gap:10px;align-items:flex-start;border:1.5px solid;}
+.notice-box.notice-orange{background:var(--amber-soft);border-color:var(--amber-border);color:#92400e;}
+.notice-box.notice-purple{background:var(--blue-soft);border-color:#a8c0f8;color:var(--blue-dark);}
+.notice-box .nb-icon{font-size:1rem;flex-shrink:0;line-height:1.4;}
+.notice-box .nb-title{font-size:.78rem;font-weight:700;margin-bottom:3px;}
+.notice-box .nb-desc{font-size:.72rem;line-height:1.6;opacity:.9;}
+
+/* ── Procurement badge ── */
+.proc-badge{font-size:.72rem;padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap;margin-top:5px;display:inline-block;}
+.proc-badge.proc-self{background:var(--green-soft);color:var(--green);border:1px solid var(--green-border);}
+.proc-badge.proc-bid{background:var(--red-soft);color:var(--red);border:1px solid var(--red-border);}
+.proc-badge.proc-hide{display:none!important;}
+
+/* ── Fee checkboxes ── */
+.fee-check-group{display:flex;flex-wrap:wrap;gap:8px;}
+.fee-check{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border-mid);background:var(--surface);font-size:.78rem;font-weight:500;color:var(--text-mid);cursor:pointer;transition:all .15s;user-select:none;}
+.fee-check input{display:none;}
+.fee-check:hover{border-color:var(--blue-mid);background:var(--blue-pale);}
+.fee-check.checked{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 2px 8px rgba(0,61,121,0.25);}
+.fee-check.fc-disabled{opacity:.38;pointer-events:none;}
+.fc-icon{font-size:.88rem;}
+
+/* ── Multi-speaker daily rows ── */
+.spk-daily-row{display:grid;grid-template-columns:auto 1fr auto auto auto auto;align-items:center;gap:8px;padding:9px 14px;background:var(--surface);border:1px solid var(--border-mid);border-bottom:none;font-size:.8rem;}
+.spk-daily-row:first-child{border-radius:var(--r-sm) var(--r-sm) 0 0;}
+.spk-daily-row .spk-num{font-size:.72rem;font-weight:700;color:var(--blue);background:var(--blue-soft);border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.spk-daily-row select{font-size:.76rem;padding:6px 28px 6px 9px;}
+.spk-daily-row input[type="number"]{font-size:.8rem;padding:6px 9px;width:80px;}
+.spk-daily-row .spk-rate{font-size:.72rem;color:var(--text-soft);white-space:nowrap;}
+.spk-daily-row .spk-total{font-size:.82rem;font-weight:700;color:var(--blue);min-width:90px;text-align:right;white-space:nowrap;}
+@media(max-width:600px){.spk-daily-row{grid-template-columns:auto 1fr auto;}.spk-daily-row .spk-rate,.spk-daily-row .spk-total{grid-column:2/-1;}}
+
+/* ── Disclaimer bar ── */
+.disclaimer{background:var(--amber-soft);border-bottom:2px solid var(--amber-border);padding:9px 28px;font-size:.73rem;color:#92400e;display:flex;align-items:flex-start;gap:8px;line-height:1.6;}
+.disclaimer .di-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+/* ── Footer ── */
+.app-footer{text-align:center;padding:28px 16px 40px;font-size:.7rem;color:var(--text-soft);line-height:1.9;}
+.app-footer a{color:var(--blue);text-decoration:none;border-bottom:1px dashed var(--blue-mid);}
+.app-footer a:hover{color:var(--blue-dark);}
+
+#print-area{display:none!important;}
+
+@media print{
+  #print-area{display:block!important;font-family:'Noto Sans TC',sans-serif;padding:24px;color:#000;}
+  body>*:not(#print-area){display:none!important;}
+  .print-title{font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:4px;}
+  .print-meta{font-size:.72rem;text-align:center;color:#666;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;font-size:.8rem;}
+  th,td{border:1px solid #aaa;padding:6px 10px;}
+  th{background:#f0e8d8;font-weight:600;}
+  .print-total{text-align:right;font-size:.95rem;font-weight:700;margin-top:10px;}
+  .print-note{font-size:.68rem;color:#888;margin-top:6px;}
+}
+</style>
+</head>
+<body>
+
+<div class="disclaimer">
+  <div class="di-icon">⚠️</div>
+  <div><strong>本系統僅供參考</strong>，金額上限與預算編列與否，皆請依最新公告及主計室標準為主，實際核銷前請務必向主計室確認。</div>
+</div>
+
+<div class="header">
+  <a href="index.html" class="back-link">← 返回管理系統</a>
+  <h1>📊 經費估算表計算小工具</h1>
+  <p>台大醫院醫學研究部｜依標準表自動計算上限的懶人工具</p>
+</div>
+
+<div class="wrap">
+
+<!-- 1 經費來源 -->
+<div class="card">
+  <div class="card-head"><span class="num-tag">1</span> 經費來源</div>
+  <div class="row col3">
+    <div class="field">
+      <label>來源別</label>
+      <select id="fund-src" onchange="onFundChange()">
+        <option value="jia">科部教學研究業務費</option>
+        <option value="shen">教學部深耕計畫業務費</option>
+        <option value="ying">穎川計畫經費</option>
+        <option value="other">其他（自填）</option>
+      </select>
+    </div>
+    <div class="field" id="other-field" style="display:none">
+      <label>自填名稱</label>
+      <input type="text" id="fund-other" placeholder="輸入經費來源名稱">
+    </div>
+    <div class="field" id="japan-field" style="display:none">
+      <label>是否邀請日本講者 <span class="hint">（穎川計畫）</span></label>
+      <select id="is-japan" onchange="onSpeakerChange()">
+        <option value="0">否</option>
+        <option value="1">是（啟用日本相關選項）</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 固定提示：主計室確認 -->
+  <div class="alert-row col2" id="fund-alerts">
+    <div class="notice-box notice-orange">
+      <div class="nb-icon">📌</div>
+      <div>
+        <div class="nb-title" id="confirm-title">需與主計室確認並上簽申請</div>
+        <div class="nb-desc" id="confirm-desc">核銷前請先與主計室確認適用要點及流程，並完成上簽申請程序後再行辦理。</div>
+      </div>
+    </div>
+    <div class="notice-box notice-purple hidden" id="ying-notice">
+      <div class="nb-icon">📝</div>
+      <div>
+        <div class="nb-title">穎川計畫：需撰寫計畫書並上簽申請</div>
+        <div class="nb-desc">使用穎川計畫經費須另行撰寫計畫書，並依規定完成上簽申請程序，請於辦理前備妥相關文件。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 深耕計畫：精簡提示 + 開啟 Modal 按鈕 -->
+  <div class="shen-panel" id="shen-panel">
+    <div style="font-size:.78rem;color:#306830;line-height:1.9;">
+      🌱 <strong>深耕計畫（PCH114-2）</strong>　計畫名稱欄填寫：<code style="background:#fff;padding:1px 6px;border-radius:4px;border:1px solid #b8d8b8;font-size:.75rem;">PCH114-2</code><br>
+      📞 <strong>聯絡窗口：教學部 吳書婷　分機 263453</strong>　｜　核銷前請務必先會吳書婷確認並記錄
+    </div>
+  </div>
+</div>
+
+<!-- 2 活動性質 -->
+<div class="card">
+  <div class="card-head"><span class="num-tag">2</span> 活動性質</div>
+  <div class="row col3">
+    <div class="field">
+      <label>類型</label>
+      <select id="act-type" onchange="onActChange()">
+        <option value="A01">整日</option>
+        <option value="A02">半日</option>
+        <option value="A03">輸入時數</option>
+      </select>
+    </div>
+    <div class="field" id="hours-field" style="display:none">
+      <label>時數 <span class="hint">（小時）</span></label>
+      <input type="number" id="act-hours" min="0.5" max="24" step="0.5" value="2" oninput="render()">
+    </div>
+    <div class="field">
+      <label>參加人數 <span class="hint">（影響餐費上限）</span></label>
+      <input type="number" id="pax" min="1" step="1" value="20" oninput="render()">
+    </div>
+  </div>
+</div>
+
+<!-- 3 講者性質 -->
+<div class="card">
+  <div class="card-head"><span class="num-tag">3</span> 邀請講者性質</div>
+  <div class="row col3">
+    <div class="field">
+      <label>講者類別</label>
+      <select id="spk-type" onchange="onSpeakerChange()">
+        <option value="C01">外聘國內專家學者</option>
+        <option value="C01b">外聘與本院有隸屬關係之機構學校人員</option>
+        <option value="C02">外聘國外專家學者</option>
+        <option value="C02j">外聘國外（日本，穎川計畫）</option>
+        <option value="C03">內聘（本院人員）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>講者人數</label>
+      <input type="number" id="spk-count" min="1" max="10" step="1" value="1" oninput="onSpeakerChange()">
+    </div>
+    <div class="field" id="level-field" style="display:none">
+      <label>國外顧問級別 <span class="hint" id="level-hint">（單人適用）</span></label>
+      <select id="spk-level" onchange="calcB01Daily();render()">
+        <option value="5">一、諾貝爾級（14,260 元/日）</option>
+        <option value="4">二、特聘講座（10,695 元/日）</option>
+        <option value="3" selected>三、教授級（8,915 元/日）</option>
+        <option value="2">四、副教授級（7,130 元/日）</option>
+        <option value="1">五、助理教授級（5,350 元/日）</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 擬申請費用勾選 -->
+  <div style="margin-top:10px;">
+    <label style="font-size:.78rem;font-weight:600;color:var(--text-mid);display:block;margin-bottom:8px;">擬申請費用項目 <span style="font-size:.7rem;font-weight:400;color:var(--text-soft);">（可複選，依勾選顯示對應欄位）</span></label>
+    <div class="fee-check-group">
+      <label class="fee-check" id="fc-honorarium">
+        <input type="checkbox" id="chk-honorarium" onchange="onFeeChange()">
+        <span class="fc-icon">🎤</span> 講座鐘點費
+      </label>
+      <label class="fee-check" id="fc-daily">
+        <input type="checkbox" id="chk-daily" onchange="onFeeChange()">
+        <span class="fc-icon">🌐</span> 日支生活費（國外適用）
+      </label>
+      <label class="fee-check" id="fc-lodge">
+        <input type="checkbox" id="chk-lodge" onchange="onFeeChange()">
+        <span class="fc-icon">🏨</span> 住宿費
+      </label>
+      <label class="fee-check" id="fc-transport">
+        <input type="checkbox" id="chk-transport" onchange="onFeeChange()">
+        <span class="fc-icon">🚌</span> 交通費
+      </label>
+      <label class="fee-check" id="fc-misc">
+        <input type="checkbox" id="chk-misc" onchange="onFeeChange()">
+        <span class="fc-icon">🍱</span> 其他（場地、餐費、雜費等）
+      </label>
+    </div>
+  </div>
+
+  <div id="domestic-note" class="info-box hidden" style="margin-top:8px;">ℹ️ 國內講者不適用 B01 日支生活費標準；相關欄位已停用。</div>
+</div>
+
+<!-- 4 核銷項目 -->
+<div class="card">
+  <div class="card-head"><span class="num-tag terra">4</span> 擬核銷項目</div>
+  <div class="item-grid">
+
+    <!-- ═══ B01 群組 ═══ -->
+    <div class="std-banner" id="banner-b01" style="display:none">
+      <div class="sb-icon">📋</div>
+      <div class="sb-body">
+        <div class="sb-title">各機關聘請國外顧問、專家及學者來臺工作期間支付費用最高標準表（B01）</div>
+        <div class="sb-sub">適用項目：住宿費 ／ 國內交通費 ／ 國外交通費（機票）／ 講座鐘點費（與B02二擇一）　<a href="https://law.dgpa.gov.tw/LawContent.aspx?id=GL000286&kw=%E5%90%84%E6%A9%9F%E9%97%9C%E8%81%98%E8%AB%8B%E5%9C%8B%E5%A4%96%E9%A1%A7%E5%95%8F" target="_blank" class="std-link">📄 查看法規全文 ↗</a></div>
+      </div>
+    </div>
+
+    <!-- B01 日支生活費（動態多講者） -->
+    <div id="row-B01daily" style="display:none">
+      <div style="font-size:.76rem;font-weight:600;color:var(--text-mid);margin-bottom:6px;padding:8px 14px 0;">
+        🌐 日支生活費明細 <span style="font-size:.68rem;font-weight:400;color:var(--text-soft);">（B01標準　已含鐘點費＋生活費，不含住宿）</span>
+      </div>
+      <div id="b01-speakers-list"></div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:8px 14px;background:var(--blue-pale);border-radius:0 0 var(--r-sm) var(--r-sm);border:1px solid var(--border-mid);border-top:none;">
+        <span style="font-size:.76rem;color:var(--text-mid);">日支小計</span>
+        <span style="font-size:1rem;font-weight:700;color:var(--blue);" id="b01-subtotal">NT$ 0</span>
+      </div>
+      <div class="warn-box" id="warn-combined-b01" style="display:none;margin-top:6px;"></div>
+    </div>
+
+    <!-- D01 住宿費 -->
+    <div class="item-row" id="row-D01" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col">
+          <span class="item-name">住宿費</span>
+        </div>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="v-D01" min="0" step="1" placeholder="輸入金額" oninput="render()">
+        </div>
+        <div class="lim-badge neutral" id="lim-D01">核實報支</div>
+      </div>
+      <div class="item-note">🏨 住宿費屬 B03 膳宿費，國外來臺外賓每人每日上限 <strong>4,500 元</strong>。如另支給日支生活費，兩者合計不得超過 B01 該級別標準表總額上限。</div>
+      <div id="warn-d01-daily" class="warn-box" style="display:none;margin-top:6px;">⚠ 已填寫日支生活費——講座鐘點費已含於日支內，請確認是否需另列此項。</div>
+    </div>
+
+    <!-- D02 國內交通費 -->
+    <div class="item-row" id="row-D02" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col">
+          <span class="item-name">國內交通費（往返）</span>
+        </div>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="v-D02" min="0" step="1" placeholder="輸入金額" oninput="render()">
+        </div>
+        <div class="lim-badge neutral" id="lim-D02">核實報支</div>
+      </div>
+      <div class="item-note">🚌 依出差旅費相關規定核實報支。</div>
+    </div>
+
+    <!-- D03 國外交通費（機票） -->
+    <div class="item-row" id="row-D03" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col">
+          <span class="item-name">國外交通費（機票）</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <div class="cur-toggle">
+              <button id="cur-twd" class="cur-active" onclick="setCur('TWD')">NT$</button>
+              <button id="cur-usd" onclick="setCur('USD')">US$</button>
+            </div>
+            <div id="rate-field" style="display:none;flex:1;">
+              <input type="number" id="usd-rate" min="1" step="0.1" value="32" placeholder="匯率(TWD/USD)" title="當前匯率（新臺幣/美元）" oninput="render()">
+            </div>
+          </div>
+          <div class="input-wrap">
+            <span class="prefix" id="d03-prefix">$</span>
+            <input type="number" id="v-D03" min="0" step="1" placeholder="輸入金額" oninput="render()">
+          </div>
+          <div id="d03-converted" style="font-size:.7rem;color:var(--text-soft);display:none;"></div>
+        </div>
+        <div class="lim-badge neutral" id="lim-D03">最高頭等艙</div>
+      </div>
+      <div class="item-note">✈️ 最高給付頭等艙票價，核實報支。金額以<strong>新臺幣</strong>計入合計；可切換美金後輸入並設定匯率換算。</div>
+    </div>
+
+    <div class="group-sep"></div>
+
+    <!-- ═══ B02 群組 ═══ -->
+    <div class="std-banner" id="banner-b02" style="display:none">
+      <div class="sb-icon">📋</div>
+      <div class="sb-body">
+        <div class="sb-title">講座鐘點費支給表（B02）</div>
+        <div class="sb-sub">適用項目：講座鐘點費　每節50分鐘；連續2節為90分鐘；未滿者減半支給　<a href="https://law.dgpa.gov.tw/LawContent.aspx?id=GL000341&kw=%E8%AC%9B%E5%BA%A7%E9%90%98%E9%BB%9E%E8%B2%BB%E6%94%AF%E7%B5%A6%E8%A1%A8" target="_blank" class="std-link">📄 查看法規全文 ↗</a></div>
+      </div>
+    </div>
+
+    <!-- D04 鐘點費 -->
+    <div class="item-row item-active" id="row-D04" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col">
+          <span class="item-name">講座鐘點費</span>
+        </div>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="v-D04" min="0" step="1" placeholder="輸入金額" oninput="calcB02()">
+        </div>
+        <div class="lim-badge neutral" id="lim-D04">計算中…</div>
+      </div>
+      <div class="sub-card">
+        <div class="sub-title">📘 B02 鐘點費輔助計算（每節50分鐘；連續2節=90分鐘，未滿者減半）</div>
+        <div class="row col3">
+          <div class="field">
+            <label>節數</label>
+            <input type="number" id="b02-nodes" min="1" max="20" step="1" value="1" oninput="calcB02()">
+          </div>
+          <div class="field">
+            <label>每節單價 <span class="hint" id="b02-hint">—</span></label>
+            <input type="number" id="b02-unit" readonly>
+          </div>
+          <div class="field">
+            <label>末節未滿</label>
+            <select id="b02-half" onchange="calcB02()">
+              <option value="0">否，整節計算</option>
+              <option value="1">是，末節減半支給</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>建議鐘點費上限</label>
+          <input type="text" id="b02-result" readonly style="font-weight:700;color:var(--brown);" placeholder="—">
+        </div>
+        <div class="warn-box hidden" id="b02-warn">⚠ 輸入金額超過建議上限——仍可填寫，但請注意：<br>① 需與主計室確認是否符合規定<br>② 於簽文中載明超額理由（如講者資歷、國際聲譽、延聘難易程度等）</div>
+        <div class="warn-box" id="warn-d04-daily" style="display:none;">⚠ 已填寫日支生活費——講座鐘點費已含於日支內，請確認是否需另列此項。</div>
+      </div>
+    </div>
+
+    <div class="group-sep"></div>
+
+    <!-- ═══ B03 群組 ═══ -->
+    <div class="std-banner active-std" id="banner-b03" style="display:none">
+      <div class="sb-icon">📋</div>
+      <div class="sb-body">
+        <div class="sb-title">教育部及所屬機關（構）辦理各類會議講習訓練與研討（習）會管理要點（B03）</div>
+        <div class="sb-sub">適用項目：場地費 ／ 餐費（茶點）／ 餐費（整日）／ 文具費 ／ 雜費　<a href="https://edu.law.moe.gov.tw/LawContent.aspx?id=GL002299" target="_blank" class="std-link">📄 查看法規全文 ↗</a></div>
+      </div>
+    </div>
+
+    <!-- D05 場地費 -->
+    <div class="item-row item-active" id="row-D05" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col"><span class="item-name">場地費</span></div>
+        <div class="input-wrap"><span class="prefix">$</span><input type="number" id="v-D05" min="0" step="1" placeholder="輸入金額" oninput="render()"></div>
+        <div class="lim-badge neutral" id="lim-D05">核實編列</div>
+      </div>
+      <div class="item-note">🏢 應優先使用自有場地；確有必要時依B03規定選擇外部場地，需於簽呈敘明。</div>
+      <span class="proc-badge proc-hide" id="proc-D05"></span>
+    </div>
+
+    <!-- D06 茶點費 -->
+    <div class="item-row item-active" id="row-D06" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col"><span class="item-name">餐費（茶點費）</span></div>
+        <div class="input-wrap"><span class="prefix">$</span><input type="number" id="v-D06" min="0" step="1" placeholder="輸入金額" oninput="render()"></div>
+        <div class="lim-badge neutral" id="lim-D06">計算中…</div>
+      </div>
+      <div class="item-note" id="note-D06">☕ 茶點費：每人上限 50 元（依人數自動計算）</div>
+      <span class="proc-badge proc-hide" id="proc-D06"></span>
+    </div>
+
+    <!-- D07 整日餐費 -->
+    <div class="item-row item-active" id="row-D07" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col"><span class="item-name">餐費（整日）</span></div>
+        <div class="input-wrap"><span class="prefix">$</span><input type="number" id="v-D07" min="0" step="1" placeholder="輸入金額" oninput="render()"></div>
+        <div class="lim-badge neutral" id="lim-D07">計算中…</div>
+      </div>
+      <div class="item-note" id="note-D07">🍱 午餐費：每人上限 120 元</div>
+      <span class="proc-badge proc-hide" id="proc-D07"></span>
+    </div>
+
+    <!-- D08 文具費 -->
+    <div class="item-row item-active" id="row-D08" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col"><span class="item-name">文具費</span></div>
+        <div class="input-wrap"><span class="prefix">$</span><input type="number" id="v-D08" min="0" step="1" placeholder="輸入金額" oninput="render()"></div>
+        <div class="lim-badge neutral" id="lim-D08">核實編列</div>
+      </div>
+      <span class="proc-badge proc-hide" id="proc-D08"></span>
+    </div>
+
+    <!-- D09 雜費 -->
+    <div class="item-row item-active" id="row-D09" style="display:none">
+      <div class="item-inner">
+        <div class="item-label-col"><span class="item-name">雜費</span></div>
+        <div class="input-wrap"><span class="prefix">$</span><input type="number" id="v-D09" min="0" step="1" placeholder="輸入金額" oninput="render()"></div>
+        <div class="lim-badge neutral" id="lim-D09">核實編列</div>
+      </div>
+      <span class="proc-badge proc-hide" id="proc-D09"></span>
+    </div>
+
+  </div><!-- /item-grid -->
+</div>
+
+<!-- 總覽 -->
+<div class="summary-card">
+  <h2>📊 核銷金額總覽</h2>
+  <div class="total-row">
+    <span class="lbl">合計</span>
+    <span class="amt" id="total-amt">0</span>
+    <span class="unit">元（新臺幣）</span>
+  </div>
+  <div class="s-rows" id="s-rows"><div style="opacity:.5;font-size:.8rem;padding:6px 0">尚未輸入任何金額</div></div>
+  <div class="s-warn hidden" id="s-warn"></div>
+  <div style="margin-top:12px;padding:9px 12px;background:rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;opacity:.85;line-height:1.7;">
+    🧾 <strong>發票統編：03753600</strong>　國立台灣大學醫學院附設醫院
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="doPrint()">🖨 列印核銷表</button>
+    <button class="btn btn-ghost" onclick="copyText()">📋 複製摘要</button>
+    <button class="btn btn-ghost" onclick="resetAll()">↺ 重設</button>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<div class="app-footer">
+  系統設計：醫學研究部 陳巧瑜管理師（分機 263254）｜
+  <a href="/cdn-cgi/l/email-protection#4132342c2c24332229242f012f3534296f262e376f3536"><span class="__cf_email__" data-cfemail="592a2c34343c2b3a313c3719372d2c31773e362f772d2e">[email&#160;protected]</span></a><br>
+  系統更新日：2026/03/25　｜　本系統僅供參考，請依最新公告及主計室標準辦理
+</div>
+
+<div id="print-area"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── Constants ──────────────────────────────────────────────
+const B01_DAY  = {5:14260,4:10695,3:8915,2:7130,1:5350};
+const B02_RATE = {'C01':2000,'C01b':1500,'C02':2400,'C02j':2400,'C03':1000};
+const LABELS   = {
+  B01daily:'日支生活費（國外顧問）',D01:'住宿費',D02:'國內交通費（往返）',
+  D03:'國外交通費（機票）',D04:'講座鐘點費',D05:'場地費',
+  D06:'餐費（茶點）',D07:'餐費（整日）',D08:'文具費',D09:'雜費'
+};
+const LEVEL_OPTS = [
+  {v:'5',label:'一、諾貝爾級',  rate:14260},
+  {v:'4',label:'二、特聘講座',  rate:10695},
+  {v:'3',label:'三、教授級',    rate:8915},
+  {v:'2',label:'四、副教授級',  rate:7130},
+  {v:'1',label:'五、助理教授級',rate:5350},
+];
+
+let curMode = 'TWD';
+window._b01dailyTotal = 0;
+
+// ── Helpers ────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const gv = id => { const v=parseFloat($(id)?.value); return isNaN(v)?0:v; };
+const gt = id => $(id)?.value||'';
+const show = (id, yes) => { const el=$(id); if(el) el.style.display = yes?'':'none'; };
+
+function setLim(code, text, cls){
+  const el=$('lim-'+code);
+  if(!el) return;
+  el.textContent = text;
+  el.className   = 'lim-badge '+(cls||'neutral');
+}
+function setBannerActive(id, active){
+  const el=$(id);
+  if(!el) return;
+  el.className = 'std-banner '+(active?'active-std':'inactive-std');
+}
+
+// ── Currency ───────────────────────────────────────────────
+function setCur(mode){
+  curMode = mode;
+  $('cur-twd').className = mode==='TWD'?'cur-active':'';
+  $('cur-usd').className = mode==='USD'?'cur-active':'';
+  show('rate-field', mode==='USD');
+  render();
+}
+function getD03asTWD(){
+  const raw = gv('v-D03');
+  return curMode==='USD' ? Math.round(raw*(gv('usd-rate')||32)) : raw;
+}
+
+// ── Fee checkboxes ─────────────────────────────────────────
+function chk(id){ return !!($(id)?.checked); }
+function setChk(id, val){
+  const el=$(id); if(!el) return;
+  el.checked = val;
+  const lbl = el.closest('.fee-check');
+  if(lbl) lbl.classList.toggle('checked', val);
+}
+function syncAllCheckStyles(){
+  ['chk-honorarium','chk-daily','chk-lodge','chk-transport','chk-misc'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    const lbl=el.closest('.fee-check');
+    if(lbl) lbl.classList.toggle('checked', el.checked);
+  });
+}
+
+// ── B01 Speaker rows ───────────────────────────────────────
+function buildSpeakerRows(){
+  const container = $('b01-speakers-list');
+  if(!container) return;
+  const b01ok    = isB01Applicable();
+  const wantDaily = chk('chk-daily');
+  const n = Math.max(1, parseInt($('spk-count')?.value)||1);
+
+  if(!b01ok || !wantDaily){ container.innerHTML=''; window._b01dailyTotal=0; return; }
+
+  // Preserve existing values
+  const existing = [...container.querySelectorAll('.spk-daily-row')].map(row=>({
+    level: row.querySelector('.spk-level-sel')?.value||'3',
+    days:  row.querySelector('.spk-days-inp')?.value||''
+  }));
+
+  let html='';
+  for(let i=0;i<n;i++){
+    const lv = existing[i]?.level||'3';
+    const dy = existing[i]?.days||'';
+    const opts = LEVEL_OPTS.map(o=>`<option value="${o.v}"${o.v===lv?' selected':''}>${o.label}（${o.rate.toLocaleString()}元/日）</option>`).join('');
+    const hideSel = n===1 ? 'style="display:none"' : '';
+    html += `<div class="spk-daily-row">
+      <span class="spk-num">${i+1}</span>
+      <select class="spk-level-sel" onchange="calcB01Daily()" ${hideSel}>${opts}</select>
+      <input class="spk-days-inp" type="number" min="1" max="90" step="1" placeholder="天數" value="${dy}" oninput="calcB01Daily()">
+      <span class="spk-rate" id="spk-rate-${i}">× — 元/日</span>
+      <span style="font-size:.75rem;color:var(--text-soft);">=</span>
+      <span class="spk-total" id="spk-total-${i}">NT$ —</span>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function calcB01Daily(){
+  const container = $('b01-speakers-list');
+  if(!container) return;
+  const n = Math.max(1, parseInt($('spk-count')?.value)||1);
+  const singleLevel = parseInt(gt('spk-level'))||3;
+  let grandTotal = 0;
+
+  container.querySelectorAll('.spk-daily-row').forEach((row,i)=>{
+    const level = n===1 ? singleLevel : parseInt(row.querySelector('.spk-level-sel')?.value||'3');
+    const opt   = LEVEL_OPTS.find(o=>o.v===String(level))||LEVEL_OPTS[2];
+    const days  = parseInt(row.querySelector('.spk-days-inp')?.value)||0;
+    const total = days * opt.rate;
+    grandTotal += total;
+    const rateEl = document.getElementById('spk-rate-'+i);
+    const totEl  = document.getElementById('spk-total-'+i);
+    if(rateEl) rateEl.textContent = `× ${opt.rate.toLocaleString()} 元/日`;
+    if(totEl)  totEl.textContent  = days>0 ? `NT$ ${total.toLocaleString()}` : 'NT$ —';
+  });
+
+  const sub = $('b01-subtotal');
+  if(sub) sub.textContent = `NT$ ${grandTotal.toLocaleString()}`;
+  window._b01dailyTotal = grandTotal;
+}
+
+// ── B02 calc (silent, no render trigger) ──────────────────
+function calcB02quiet(){
+  const rate  = B02_RATE[gt('spk-type')]||2000;
+  const nodes = parseInt($('b02-nodes')?.value)||1;
+  const half  = $('b02-half')?.value==='1';
+  let total   = nodes*rate;
+  if(half) total += Math.round(rate/2);
+  return {rate, total};
+}
+function calcB02(){
+  const {rate, total} = calcB02quiet();
+  if($('b02-unit')) $('b02-unit').value = rate;
+  if($('b02-hint')) $('b02-hint').textContent = `${rate.toLocaleString()} 元/節`;
+  if($('b02-result')) $('b02-result').value = `NT$ ${total.toLocaleString()} 元`;
+  const d04 = gv('v-D04');
+  if($('b02-warn')) $('b02-warn').classList.toggle('hidden', !(d04>0 && d04>total));
+  setLim('D04', `上限 ${total.toLocaleString()}`, d04>0?(d04<=total?'ok':'warn'):'neutral');
+  return total;
+}
+
+// ── Event handlers ─────────────────────────────────────────
+function onFundChange(){
+  const src = gt('fund-src');
+  show('other-field', src==='other');
+  show('japan-field', src==='ying');
+  if(src!=='ying') setChk('is-japan', false);
+  $('ying-notice')?.classList.toggle('hidden', src!=='ying');
+  $('shen-panel')?.classList.toggle('show', src==='shen');
+  if(src==='shen'){
+    if($('confirm-title')) $('confirm-title').textContent='需與主計室、教學部、醫研部確認並上簽申請';
+    if($('confirm-desc'))  $('confirm-desc').textContent='使用教學部深耕計畫業務費，核銷前須分別與主計室、教學部及醫研部確認適用要點及流程，並完成三方上簽申請程序後再行辦理。';
+  } else {
+    if($('confirm-title')) $('confirm-title').textContent='需與主計室確認並上簽申請';
+    if($('confirm-desc'))  $('confirm-desc').textContent='核銷前請先與主計室確認適用要點及流程，並完成上簽申請程序後再行辦理。';
+  }
+  onSpeakerChange();
+}
+
+function onActChange(){
+  show('hours-field', gt('act-type')==='A03');
+  render();
+}
+
+function isB01Applicable(){ return ['C02','C02j'].includes(gt('spk-type')); }
+
+function onSpeakerChange(){
+  const st      = gt('spk-type');
+  const isJapan = gt('is-japan')==='1';
+  const sel     = $('spk-type');
+  for(let i=0;i<sel.options.length;i++)
+    if(sel.options[i].value==='C02j') sel.options[i].disabled=!isJapan;
+  if(st==='C02j'&&!isJapan) sel.value='C02';
+
+  const b01ok    = isB01Applicable();
+  const n        = Math.max(1, parseInt($('spk-count')?.value)||1);
+  const wantDail = chk('chk-daily');
+
+  // Grey out daily checkbox for non-foreign; also respect mutual exclusion with honorarium
+  const hasHon2 = chk('chk-honorarium');
+  $('fc-daily')?.classList.toggle('fc-disabled', !b01ok || hasHon2);
+  if(!b01ok) setChk('chk-daily', false);
+  // If daily is still checked after speaker change, disable honorarium
+  $('fc-honorarium')?.classList.toggle('fc-disabled', chk('chk-daily'));
+
+  // Level field: only single foreign speaker + daily
+  show('level-field', b01ok && chk('chk-daily') && n===1);
+  $('domestic-note')?.classList.toggle('hidden', b01ok);
+
+  buildSpeakerRows();
+  calcB01Daily();
+  calcB02();
+  render();
+}
+
+function onFeeChange(){
+  syncAllCheckStyles();
+  const b01ok = isB01Applicable();
+
+  // 日支生活費限國外講者
+  if(chk('chk-daily') && !b01ok) setChk('chk-daily', false);
+
+  // 日支生活費 ↔ 講座鐘點費 互斥
+  if(chk('chk-daily') && chk('chk-honorarium')){
+    // 判斷剛勾的是哪個（用 event.target 不可靠，改用：日支優先）
+    setChk('chk-honorarium', false);
+  }
+  if(chk('chk-honorarium') && chk('chk-daily')){
+    setChk('chk-daily', false);
+  }
+
+  // 日支已勾 → 鐘點費 disabled；鐘點費已勾 → 日支 disabled
+  const hasDaily = chk('chk-daily');
+  const hasHon   = chk('chk-honorarium');
+  $('fc-honorarium')?.classList.toggle('fc-disabled', hasDaily);
+  $('fc-daily')?.classList.toggle('fc-disabled', !b01ok || hasHon);
+
+  const n = Math.max(1, parseInt($('spk-count')?.value)||1);
+  show('level-field', b01ok && chk('chk-daily') && n===1);
+
+  buildSpeakerRows();
+  calcB01Daily();
+  render();
+}
+
+// ── Main Render ────────────────────────────────────────────
+function render(){
+  try {
+  const b01ok       = isB01Applicable();
+  const act         = gt('act-type');
+  const pax         = Math.max(1, parseInt($('pax')?.value)||1);
+  const {total:b02max} = calcB02quiet();
+  const wantHonorarium = chk('chk-honorarium');
+  const wantDaily      = chk('chk-daily');
+  const wantLodge      = chk('chk-lodge');
+  const wantTransport  = chk('chk-transport');
+  const wantMisc       = chk('chk-misc');
+
+  // B01 daily total
+  const b01daily = window._b01dailyTotal||0;
+
+  // ── Banner B01
+  const b01BannerActive = b01ok && (wantDaily||wantTransport||wantLodge);
+  show('banner-b01', b01BannerActive);
+  if(b01BannerActive) setBannerActive('banner-b01', true);
+
+  // ── 日支生活費 row
+  show('row-B01daily', b01ok && wantDaily);
+
+  // ── 住宿費 D01
+  show('row-D01', wantLodge);
+  const d01 = wantLodge ? gv('v-D01') : 0;
+  if(wantLodge){
+    const lodgeMax = b01ok && wantDaily && b01daily>0 ? null : null; // no hard cap shown separately
+    setLim('D01', '上限 4,500/日', d01>0?'ok':'neutral');
+    // Combined warning
+    const cw = $('warn-combined-b01');
+    if(cw && b01daily>0 && d01>0){
+      cw.style.display='';
+      cw.textContent=`⚠ 日支生活費（${b01daily.toLocaleString()}）＋住宿費（${d01.toLocaleString()}）合計 ${(b01daily+d01).toLocaleString()} 元，請確認不超過 B01 標準表總額上限。`;
+    } else if(cw){ cw.style.display='none'; }
+  }
+
+  // ── 鐘點費 D04（有日支則隱藏）
+  const showD04 = wantHonorarium && !(wantDaily && b01daily>0);
+  show('row-D04', showD04);
+  show('banner-b02', showD04);
+  if(showD04){
+    calcB02(); // update badges
+  } else {
+    if($('v-D04') && !showD04) $('v-D04').value='';
+  }
+
+  // ── 交通費 D02 / D03
+  show('row-D02', wantTransport);
+  show('row-D03', wantTransport && b01ok);
+  if(!wantTransport){ if($('v-D02')) $('v-D02').value=''; if($('v-D03')) $('v-D03').value=''; }
+  const d02 = gv('v-D02');
+  setLim('D02', d02>0?'✓ 核實報支':'核實報支', d02>0?'ok':'neutral');
+  const d03raw = gv('v-D03');
+  const d03twd = getD03asTWD();
+  const convEl = $('d03-converted');
+  if(convEl){
+    convEl.style.display = curMode==='USD'&&d03raw>0?'block':'none';
+    if(curMode==='USD'&&d03raw>0) convEl.textContent=`≈ NT$ ${d03twd.toLocaleString()} 元（匯率 ${gv('usd-rate')||32}）`;
+  }
+  setLim('D03', d03raw>0?'✓ 最高頭等艙':'最高頭等艙', d03raw>0?'ok':'neutral');
+
+  // ── 其他 B03
+  ['D05','D06','D07','D08','D09'].forEach(code=>{
+    show('row-'+code, wantMisc);
+    if(!wantMisc && $('v-'+code)) $('v-'+code).value='';
+  });
+  show('banner-b03', wantMisc);
+  if(wantMisc) setBannerActive('banner-b03', true);
+
+  // D05 D08 D09 lim
+  setLim('D05', gv('v-D05')>0?'✓ 核實編列':'核實編列', gv('v-D05')>0?'ok':'neutral');
+  setLim('D08', gv('v-D08')>0?'✓ 核實編列':'核實編列', gv('v-D08')>0?'ok':'neutral');
+  setLim('D09', gv('v-D09')>0?'✓ 核實編列':'核實編列', gv('v-D09')>0?'ok':'neutral');
+
+  // B03 Meals
+  // D06 茶點費：每人50元上限
+  const teaLimit = 50*pax;
+  let mealNote='';
+  if(act==='A01') mealNote=`整日：${pax}人×50元=${teaLimit.toLocaleString()}元`;
+  else if(act==='A02') mealNote=`半日：${pax}人×50元=${teaLimit.toLocaleString()}元`;
+  else mealNote=`${pax}人×50元=${teaLimit.toLocaleString()}元`;
+
+  // D07 餐費：每人午餐 120 元
+  const fullLimit=120*pax;
+  const mealLimit = teaLimit; // for summary check on D06
+
+  const d06=gv('v-D06');
+  if($('note-D06')) $('note-D06').textContent=`☕ 茶點費：${mealNote}（每人上限 50 元）`;
+  setLim('D06',`上限 ${teaLimit.toLocaleString()}`, d06>0?(d06<=teaLimit?'ok':'warn'):'neutral');
+
+  const d07=gv('v-D07');
+  if($('note-D07')) $('note-D07').textContent=`🍱 午餐費：${pax}人×120元=${fullLimit.toLocaleString()}元`;
+  setLim('D07',`上限 ${fullLimit.toLocaleString()}`, d07>0?(d07<=fullLimit?'ok':'warn'):'neutral');
+
+  // ── Summary
+  const codes=['B01daily','D01','D02','D03','D04','D05','D06','D07','D08','D09'];
+  let total=0, rowsHtml='', warns=[];
+  codes.forEach(code=>{
+    const rawV = code==='B01daily'?(window._b01dailyTotal||0):gv('v-'+code);
+    if(rawV<=0) return;
+    const v = code==='D03'?d03twd:rawV;
+    total+=v;
+    let over=false;
+    if(code==='D06'&&v>mealLimit) over=true;
+    if(code==='D07'&&v>fullLimit) over=true;
+    if(code==='D04'&&v>b02max) over=true;
+    if(over) warns.push(LABELS[code]);
+    const dispVal = code==='D03'&&curMode==='USD'
+      ?`US$ ${rawV.toLocaleString()} ≈ NT$ ${v.toLocaleString()}`
+      :`NT$ ${v.toLocaleString()}`;
+    rowsHtml+=`<div class="s-row${over?' over':''}"><span class="s-name">${LABELS[code]}</span><span class="s-val">${dispVal}</span></div>`;
+  });
+
+  if($('total-amt')) $('total-amt').textContent=total.toLocaleString();
+  if($('s-rows')) $('s-rows').innerHTML=rowsHtml||'<div style="opacity:.5;font-size:.8rem;padding:6px 0">尚未輸入任何金額</div>';
+
+  const sw=$('s-warn');
+  if(sw){
+    if(warns.length){ sw.classList.remove('hidden'); sw.textContent='⚠ 以下項目超過建議上限：'+warns.join('、'); }
+    else sw.classList.add('hidden');
+  }
+
+  // ── 請購/招標
+  ['D05','D06','D07','D08','D09'].forEach(code=>{
+    const v=gv('v-'+code);
+    const el=$('proc-'+code);
+    if(!el) return;
+    if(v>=10001&&v<=150000){ el.className='proc-badge proc-self'; el.textContent='💼 部門自辦請購（10,001～150,000元）'; el.style.display='inline-block'; }
+    else if(v>150000){ el.className='proc-badge proc-bid'; el.textContent='🖥 需至第二代請採購系統填單採購（超過150,000元）'; el.style.display='inline-block'; }
+    else { el.className='proc-badge proc-hide'; el.style.display='none'; }
+  });
+
+  buildPrint(codes,total,mealLimit,fullLimit,b02max,d03twd);
+  } catch(e){ console.error('render error:', e); }
+}
+
+// ── Print ──────────────────────────────────────────────────
+function buildPrint(codes,total,mealLimit,fullLimit,b02max,d03twd){
+  const fundEl=$('fund-src');
+  const fundTxt=fundEl.options[fundEl.selectedIndex].text+(gt('fund-src')==='other'?`（${gt('fund-other')}）`:'');
+  const actEl=$('act-type'); const spEl=$('spk-type');
+  const pax=$('pax')?.value||'';
+  let rows='';
+  codes.forEach(code=>{
+    const rawV=code==='B01daily'?(window._b01dailyTotal||0):gv('v-'+code); if(rawV<=0) return;
+    const v=code==='D03'?d03twd:rawV;
+    const dispStr=code==='D03'&&curMode==='USD'?`US$ ${rawV.toLocaleString()}（NT$ ${v.toLocaleString()}）`:`NT$ ${v.toLocaleString()}`;
+    rows+=`<tr><td>${LABELS[code]}</td><td style="text-align:right">${dispStr}</td></tr>`;
+  });
+  const pa=$('print-area');
+  if(!pa) return;
+  pa.innerHTML=`
+    <div class="print-title">台大醫院經費估算表</div>
+    <div class="print-meta">列印時間：${new Date().toLocaleString('zh-TW')}</div>
+    <table><thead><tr><th colspan="2">基本資料</th></tr></thead><tbody>
+      <tr><td>經費來源</td><td>${fundTxt}</td></tr>
+      <tr><td>活動性質</td><td>${actEl.options[actEl.selectedIndex].text}（${pax} 人）</td></tr>
+      <tr><td>講者性質</td><td>${spEl.options[spEl.selectedIndex].text}</td></tr>
+    </tbody></table><br>
+    <table><thead><tr><th>核銷項目</th><th style="text-align:right">金額</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="2">（無輸入項目）</td></tr>'}</tbody></table>
+    <div class="print-total">合計：NT$ ${total.toLocaleString()} 元</div>
+    <div class="print-note">※ 本系統僅供參考，實際核銷請依最新公告及主計室標準辦理。</div>`;
+}
+function doPrint(){
+  const el=$('print-area');
+  el.style.setProperty('display','block','important');
+  window.print();
+  el.style.removeProperty('display');
+}
+
+function copyText(){
+  const codes=['B01daily','D01','D02','D03','D04','D05','D06','D07','D08','D09'];
+  let total=0, lines=['【台大醫院醫學研究部 經費估算摘要】'];
+  codes.forEach(code=>{
+    const rawV=code==='B01daily'?(window._b01dailyTotal||0):gv('v-'+code); if(rawV<=0) return;
+    const v=code==='D03'?getD03asTWD():rawV; total+=v;
+    lines.push(`${LABELS[code]}：NT$ ${v.toLocaleString()} 元`);
+  });
+  lines.push('─'.repeat(28)); lines.push(`合計：NT$ ${total.toLocaleString()} 元`);
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('已複製到剪貼簿 ✓'));
+}
+
+function resetAll(){
+  if(!confirm('確定清除所有輸入？')) return;
+  document.querySelectorAll('input[type="number"]:not([readonly]),input[type="text"]:not([readonly])').forEach(el=>{
+    const defaults={pax:'20','act-hours':'2','b02-nodes':'1','usd-rate':'32','spk-count':'1'};
+    el.value=defaults[el.id]||'';
+  });
+  ['chk-honorarium','chk-daily','chk-lodge','chk-transport','chk-misc'].forEach(id=>setChk(id,false));
+  $('fund-src').value='jia'; $('act-type').value='A01'; $('spk-type').value='C01';
+  $('spk-level').value='3'; $('b02-half').value='0'; $('is-japan').value='0';
+  window._b01dailyTotal=0;
+  setCur('TWD');
+  onFundChange(); onActChange(); onSpeakerChange();
+}
+
+// ── Init ───────────────────────────────────────────────────
+syncAllCheckStyles();
+onFundChange(); onActChange(); onSpeakerChange();
+
+// Global fallback: any input in the items section triggers render
+document.addEventListener('input', function(e){
+  const id = e.target?.id || '';
+  if(id.startsWith('v-') || id==='pax' || id==='act-hours' || id==='usd-rate'){
+    render();
+  }
+});
+
+</script>
+</body>
+</html>
