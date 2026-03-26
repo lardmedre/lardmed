@@ -335,18 +335,37 @@ body {
 
 .bulk-hint { font-size: 11px; color: #4a7c59; margin-top: 3px; min-height: 14px; }
 
-.person-list-hdr { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 5px; }
-.person-list-hdr span { font-size: 11.5px; color: var(--ink-muted); }
-.clr-btn { background: none; border: 1px solid #e0a0a0; color: #cc4444; font-size: 11px; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; }
+.person-list-hdr { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 5px; gap: 6px; }
+.person-list-hdr > span { font-size: 11.5px; color: var(--ink-muted); flex-shrink: 0; }
+.clr-btn { background: none; border: 1px solid #e0a0a0; color: #cc4444; font-size: 11px; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; flex-shrink: 0; }
 .clr-btn:hover { background: #fde8e8; }
+
+/* Sort controls */
+.sort-controls { display: flex; gap: 3px; align-items: center; }
+.sort-chip {
+  padding: 2px 7px; border-radius: 20px; font-size: 10.5px; font-weight: 500;
+  border: 1px solid var(--rule); background: white; color: var(--ink-muted);
+  cursor: pointer; transition: all 0.13s; white-space: nowrap;
+  font-family: 'Noto Sans TC', sans-serif; line-height: 1.6;
+  display: flex; align-items: center; gap: 2px;
+}
+.sort-chip:hover { border-color: var(--accent-muted); color: var(--accent); }
+.sort-chip.active { background: var(--navy); border-color: var(--navy); color: white; }
+.sort-chip .sort-arrow { font-size: 9px; opacity: 0.7; }
+.sort-chip.active .sort-arrow { opacity: 1; }
 
 .person-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; margin-bottom: 12px; }
 .ptag {
   display: flex; align-items: center; justify-content: space-between;
   background: white; border: 1px solid var(--rule);
   border-radius: 3px; padding: 6px 10px; font-size: 12px;
-  animation: fadeIn 0.18s ease;
+  animation: fadeIn 0.18s ease; cursor: grab; user-select: none;
 }
+.ptag:active { cursor: grabbing; }
+.ptag.dragging { opacity: 0.4; border-style: dashed; }
+.ptag.drag-over { border-color: var(--accent); background: rgba(196,93,62,0.04); }
+.ptag-drag-handle { color: var(--rule); font-size: 13px; margin-right: 6px; cursor: grab; flex-shrink: 0; line-height: 1; }
+.ptag-drag-handle:hover { color: var(--ink-muted); }
 @keyframes fadeIn { from { opacity:0; transform: translateY(-3px); } to { opacity:1; transform: translateY(0); } }
 .ptag-info { display: flex; flex-direction: column; gap: 1px; }
 .ptag-name { font-weight: 500; color: var(--navy); font-size: 12.5px; }
@@ -589,20 +608,23 @@ body {
   body:not(.print-namecard) .out-panel { display: block; }
   body:not(.print-namecard) .out-panel:not(#sp-preview) { display: none !important; }
   body:not(.print-namecard) .sheet-wrap { box-shadow: none; border: none; }
-  body:not(.print-namecard) .sheet-hdr { background: white !important; color: black !important; padding: 10px 20px; border-bottom: 2px solid black; }
-  body:not(.print-namecard) .sheet-title-txt { font-size: 18px !important; letter-spacing: 3px; color: black !important; }
-  body:not(.print-namecard) .sheet-subtitle-txt { color: #444 !important; font-size: 10px !important; }
-  body:not(.print-namecard) .sheet-meta-bar { background: white !important; padding: 8px 20px; border-bottom: 1px solid black; gap: 28px; }
+  body:not(.print-namecard) .sheet-tbl-wrap { padding: 0; }
+  body:not(.print-namecard) .sheet-tbl { font-size: 14px; }
+  body:not(.print-namecard) .sheet-tbl thead { display: table-header-group; }
+  /* Header row: title + meta bar inside thead td */
+  body:not(.print-namecard) .sheet-hdr-row td { padding: 0 !important; background: white !important; }
+  body:not(.print-namecard) .sheet-hdr { background: white !important; color: black !important; padding: 8px 20px 4px; border-bottom: none; }
+  body:not(.print-namecard) .sheet-title-txt { font-size: 17px !important; letter-spacing: 3px; color: black !important; }
+  body:not(.print-namecard) .sheet-subtitle-txt { color: #444 !important; font-size: 9px !important; }
+  body:not(.print-namecard) .sheet-meta-bar { background: white !important; padding: 4px 20px 6px; border-bottom: 2px solid black; border-top: none; gap: 28px; }
   body:not(.print-namecard) .sm-lbl { color: black !important; font-weight: 700; }
   body:not(.print-namecard) .sm-item { color: black !important; font-size: 12px; }
-  body:not(.print-namecard) .sheet-tbl-wrap { padding: 8px 20px; }
-  body:not(.print-namecard) .sheet-tbl { font-size: 16px; }
-  body:not(.print-namecard) .sheet-tbl thead { display: table-header-group; }
-  body:not(.print-namecard) .sheet-tbl thead tr { background: #444 !important; }
-  body:not(.print-namecard) .sheet-tbl thead th { color: white !important; }
+  /* Column header row */
+  body:not(.print-namecard) .sheet-col-hdr { background: #444 !important; }
+  body:not(.print-namecard) .sheet-col-hdr th { color: white !important; padding: 5px 10px; font-family: 'Noto Serif TC', serif; }
   body:not(.print-namecard) .sheet-tbl tbody tr { border-bottom: 1px solid #ccc !important; background: white !important; }
   body:not(.print-namecard) .sheet-tbl tbody tr:nth-child(even) { background: white !important; }
-  body:not(.print-namecard) .sheet-tbl td { background: white !important; }
+  body:not(.print-namecard) .sheet-tbl td { background: white !important; padding: 5px 10px; }
   body:not(.print-namecard) .sig-box { width: 110px; height: 22px; }
   /* Namecard print mode */
   body.print-namecard #nc-print-area {
@@ -672,9 +694,6 @@ body {
   <button class="nav-btn" onclick="switchModule('namecard', this)">
     <span class="dot"></span>桌牌列印
   </button>
-  <a class="nav-btn" href="expense-calculator.html" style="text-decoration:none;">
-    <span class="dot"></span>💰 經費估算
-  </a>
 </nav>
 
 <!-- ── Body ── -->
@@ -698,7 +717,20 @@ body {
 
       <div class="sb-section">
         <div class="sb-label">基本資訊</div>
-        <div class="fg"><label>系列課程名稱（如有）</label><input type="text" id="a-series" placeholder="例：生成式AI工具輔助論文寫作系列課程"></div>
+
+        <div class="fg">
+          <label>系列課程名稱</label>
+          <select id="a-series-sel" onchange="handleSeriesSel('a-series-sel','a-series-custom','a-series')">
+            <option value="">（無）</option>
+            <option value="台大醫院醫學研究部專題演講">台大醫院醫學研究部專題演講</option>
+            <option value="台大醫院大師專題演講">台大醫院大師專題演講</option>
+            <option value="台大醫院生成式AI工具輔助論文寫作系列課程">台大醫院生成式AI工具輔助論文寫作系列課程</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="a-series-custom" placeholder="請輸入系列課程名稱" style="display:none;margin-top:6px" oninput="syncVenue('a-series-custom','a-series')">
+          <input type="hidden" id="a-series">
+        </div>
+
         <div class="fg"><label>講題 <span class="req">*</span></label><input type="text" id="a-topic" placeholder="請輸入演講題目"></div>
         <div class="fg"><label>講者姓名 <span class="req">*</span></label><input type="text" id="a-speaker" placeholder="例：李季青副教授"></div>
         <div class="fg"><label>講者單位</label><input type="text" id="a-affil" placeholder="例：長庚大學資訊工程系"></div>
@@ -716,9 +748,40 @@ body {
           </div>
         </div>
 
-        <div class="fg"><label>地點 <span class="req">*</span></label><input type="text" id="a-venue" placeholder="例：台大醫院西址第七講堂"></div>
+        <div class="fg">
+          <label>地點 <span class="req">*</span></label>
+          <select id="a-venue-sel" onchange="handleVenueSel('a-venue-sel','a-venue-custom','a-venue')">
+            <option value="">請選擇地點</option>
+            <option value="台大醫院西址第七講堂">台大醫院西址第七講堂</option>
+            <option value="台大醫學院101講堂">台大醫學院101講堂</option>
+            <option value="台大醫學院102講堂">台大醫學院102講堂</option>
+            <option value="台大醫學院103講堂">台大醫學院103講堂</option>
+            <option value="台大醫學院202講堂">台大醫學院202講堂</option>
+            <option value="__custom__">其他（自訂輸入）</option>
+          </select>
+          <input type="text" id="a-venue-custom" placeholder="請輸入地點" style="display:none;margin-top:6px" oninput="syncVenue('a-venue-custom','a-venue')">
+          <input type="hidden" id="a-venue">
+        </div>
         <div class="fg"><label>主辦單位</label><input type="text" id="a-org" value="醫學研究部"></div>
-        <div class="fg"><label>承辦人員</label><input type="text" id="a-contact" placeholder="例：醫學研究部 陳巧瑜管理師(分機263254)"></div>
+        <div class="fg"><label>承辦人員</label><input type="text" id="a-contact" value="醫學研究部 陳巧瑜管理師(分機263254)"></div>
+
+        <div class="fg">
+          <label>時數認證申請</label>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);font-weight:400;cursor:pointer">
+              <input type="checkbox" id="cert-lifelong" style="accent-color:var(--accent);width:13px;height:13px"> 公務人員終身學習時數
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);font-weight:400;cursor:pointer">
+              <input type="checkbox" id="cert-teacher" style="accent-color:var(--accent);width:13px;height:13px"> 師資培育課程認證
+            </label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);font-weight:400;cursor:pointer;flex-shrink:0">
+                <input type="checkbox" id="cert-other" style="accent-color:var(--accent);width:13px;height:13px"> 其他：
+              </label>
+              <input type="text" id="cert-other-text" placeholder="請說明" style="flex:1;border:1px solid var(--rule);border-radius:3px;padding:4px 8px;font-size:12px;background:white;outline:none">
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="sb-divider"></div>
@@ -760,7 +823,20 @@ body {
 
       <div class="sb-section">
         <div class="sb-label">基本資訊</div>
-        <div class="fg"><label>系列課程名稱（如有）</label><input type="text" id="p-series" placeholder="例：生成式AI工具輔助論文寫作系列課程"></div>
+
+        <div class="fg">
+          <label>系列課程名稱</label>
+          <select id="p-series-sel" onchange="handleSeriesSel('p-series-sel','p-series-custom','p-series')">
+            <option value="">（無）</option>
+            <option value="台大醫院醫學研究部專題演講">台大醫院醫學研究部專題演講</option>
+            <option value="台大醫院大師專題演講">台大醫院大師專題演講</option>
+            <option value="台大醫院生成式AI工具輔助論文寫作系列課程">台大醫院生成式AI工具輔助論文寫作系列課程</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="p-series-custom" placeholder="請輸入系列課程名稱" style="display:none;margin-top:6px" oninput="syncVenue('p-series-custom','p-series')">
+          <input type="hidden" id="p-series">
+        </div>
+
         <div class="fg"><label>講題 <span class="req">*</span></label><input type="text" id="p-topic" placeholder="請輸入演講題目"></div>
         <div class="fg"><label>講者姓名 <span class="req">*</span></label><input type="text" id="p-speaker" placeholder="例：李季青副教授"></div>
         <div class="fg"><label>講者單位</label><input type="text" id="p-affil" placeholder="例：長庚大學資訊工程系"></div>
@@ -778,20 +854,79 @@ body {
           </div>
         </div>
 
-        <div class="fg"><label>地點 <span class="req">*</span></label><input type="text" id="p-venue" placeholder="例：台大醫院西址第七講堂"></div>
+        <div class="fg">
+          <label>地點 <span class="req">*</span></label>
+          <select id="p-venue-sel" onchange="handleVenueSel('p-venue-sel','p-venue-custom','p-venue')">
+            <option value="">請選擇地點</option>
+            <option value="台大醫院西址第七講堂">台大醫院西址第七講堂</option>
+            <option value="台大醫學院101講堂">台大醫學院101講堂</option>
+            <option value="台大醫學院102講堂">台大醫學院102講堂</option>
+            <option value="台大醫學院103講堂">台大醫學院103講堂</option>
+            <option value="台大醫學院202講堂">台大醫學院202講堂</option>
+            <option value="__custom__">其他（自訂輸入）</option>
+          </select>
+          <input type="text" id="p-venue-custom" placeholder="請輸入地點" style="display:none;margin-top:6px" oninput="syncVenue('p-venue-custom','p-venue')">
+          <input type="hidden" id="p-venue">
+        </div>
         <div class="fg"><label>主辦單位</label><input type="text" id="p-org" value="醫學研究部"></div>
-        <div class="fg"><label>承辦人員</label><input type="text" id="p-contact" placeholder="例：醫學研究部 陳巧瑜管理師(分機263254)"></div>
+        <div class="fg"><label>承辦人員</label><input type="text" id="p-contact" value="醫學研究部 陳巧瑜管理師(分機263254)"></div>
       </div>
 
       <div class="sb-divider"></div>
 
       <div class="sb-section">
         <div class="sb-label">會後專用</div>
-        <div class="fg"><label>主持人</label><input type="text" id="p-host" placeholder="例：楊鎧鍵教授"></div>
-        <div class="fg"><label>主持人職稱/單位</label><input type="text" id="p-host-role" placeholder="例：醫學研究部規劃訓練組組長"></div>
+
+        <div class="fg">
+          <label>主持人</label>
+          <select id="p-host-sel" onchange="handleDropdownCustom('p-host-sel','p-host-custom','p-host')">
+            <option value="">請選擇</option>
+            <option value="楊鎧鍵教授">楊鎧鍵教授</option>
+            <option value="黃舒宜博士">黃舒宜博士</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="p-host-custom" placeholder="請輸入主持人" style="display:none;margin-top:6px" oninput="syncVenue('p-host-custom','p-host')">
+          <input type="hidden" id="p-host">
+        </div>
+
+        <div class="fg">
+          <label>主持人職稱/單位</label>
+          <select id="p-host-role-sel" onchange="handleDropdownCustom('p-host-role-sel','p-host-role-custom','p-host-role')">
+            <option value="">請選擇</option>
+            <option value="醫學研究部">醫學研究部</option>
+            <option value="醫學研究部規劃訓練組組長">醫學研究部規劃訓練組組長</option>
+            <option value="__custom__">自訂</option>
+          </select>
+          <input type="text" id="p-host-role-custom" placeholder="請輸入職稱/單位" style="display:none;margin-top:6px" oninput="syncVenue('p-host-role-custom','p-host-role')">
+          <input type="hidden" id="p-host-role">
+        </div>
+
         <div class="fg"><label>課程錄影連結（限院內）</label><input type="url" id="p-video" placeholder="https://edu.ntuh.gov.tw/course/…"></div>
         <div class="fg"><label>院內課號</label><input type="text" id="p-courseno" placeholder="例：200332"></div>
-        <div class="fg"><label>工作人員</label><input type="text" id="p-staff" placeholder="例：陳巧瑜、高俐婷、范曉寧"></div>
+
+        <div class="fg">
+          <label>工作人員</label>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;margin-bottom:6px" id="staff-checks">
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="陳巧瑜" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 陳巧瑜
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="高俐婷" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 高俐婷
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="邱玉婷" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 邱玉婷
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="范曉寧" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 范曉寧
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;background:white;border:1px solid var(--rule);border-radius:20px;padding:3px 9px">
+              <input type="checkbox" value="黃舒宜" style="accent-color:var(--accent);width:12px;height:12px" onchange="updateStaff()"> 黃舒宜
+            </label>
+          </div>
+          <input type="text" id="p-staff-custom" placeholder="其他工作人員（可加填）" style="width:100%;border:1px solid var(--rule);border-radius:3px;padding:6px 10px;font-size:12px;background:white;outline:none" oninput="updateStaff()">
+          <input type="hidden" id="p-staff">
+        </div>
+
         <div class="fg"><label>補充說明／本部摘要</label><textarea id="p-summary" rows="4" placeholder="說明課程重點與部門規劃（可留空，系統自動生成）…"></textarea></div>
       </div>
 
@@ -807,7 +942,20 @@ body {
         <div class="sb-label">活動資訊</div>
         <div class="fg"><label>簽到表標題</label><input type="text" id="s-title" value="臺大醫院醫學研究部學術演講簽到表"></div>
         <div class="fg"><label>日期 <span class="req">*</span></label><input type="date" id="s-date"></div>
-        <div class="fg"><label>地點</label><input type="text" id="s-venue" placeholder="例：台大醫院西址第七講堂"></div>
+        <div class="fg">
+          <label>地點</label>
+          <select id="s-venue-sel" onchange="handleVenueSel('s-venue-sel','s-venue-custom','s-venue');renderSheet()">
+            <option value="">請選擇地點</option>
+            <option value="台大醫院西址第七講堂">台大醫院西址第七講堂</option>
+            <option value="台大醫學院101講堂">台大醫學院101講堂</option>
+            <option value="台大醫學院102講堂">台大醫學院102講堂</option>
+            <option value="台大醫學院103講堂">台大醫學院103講堂</option>
+            <option value="台大醫學院202講堂">台大醫學院202講堂</option>
+            <option value="__custom__">其他（自訂輸入）</option>
+          </select>
+          <input type="text" id="s-venue-custom" placeholder="請輸入地點" style="display:none;margin-top:6px" oninput="syncVenue('s-venue-custom','s-venue');renderSheet()">
+          <input type="hidden" id="s-venue">
+        </div>
       </div>
 
       <div class="sb-divider"></div>
@@ -836,7 +984,12 @@ body {
 
         <div class="person-list-hdr" id="pl-hdr" style="display:none">
           <span id="pl-count">共 0 位</span>
-          <button class="clr-btn" onclick="clearAll()">🗑 全部清除</button>
+          <div class="sort-controls">
+            <button class="sort-chip active" id="sort-unit" onclick="setSort('unit',this)" title="依單位→姓名排序">單位 <span class="sort-arrow">↑</span></button>
+            <button class="sort-chip" id="sort-name" onclick="setSort('name',this)" title="依姓名排序">姓名 <span class="sort-arrow">↑</span></button>
+            <button class="sort-chip" id="sort-manual" onclick="setSort('manual',this)" title="手動拖曳排序">自訂</button>
+          </div>
+          <button class="clr-btn" onclick="clearAll()" title="全部清除">🗑</button>
         </div>
         <div class="person-list" id="person-list"></div>
       </div>
@@ -1240,6 +1393,21 @@ function generateAnn() {
   const contact = v('a-contact'), abstract = v('a-abstract'), regurl = v('a-regurl');
   const spk = affil ? `${affil} ${speaker}` : speaker;
 
+  // ── Certification ──
+  const certLines = [];
+  if (document.getElementById('cert-lifelong')?.checked) certLines.push('公務人員終身學習時數');
+  if (document.getElementById('cert-teacher')?.checked) certLines.push('師資培育課程認證');
+  const certOtherChk = document.getElementById('cert-other')?.checked;
+  const certOtherTxt = document.getElementById('cert-other-text')?.value.trim();
+  if (certOtherChk && certOtherTxt) certLines.push(certOtherTxt);
+  const certStr = certLines.join('、');
+  const hasCert = certLines.length > 0;
+
+  // ── Early check-in time ──
+  const startTime = document.getElementById('a-time-start')?.value;
+  const earlyTime = subtractHalfHour(startTime);
+  const earlyStr = earlyTime ? `（請提早至 ${earlyTime} 完成簽到）` : '';
+
   // ── Preview HTML ──
   let html = '<div class="ann-hd">';
   if (series) html += `<div class="ann-series">台大醫院醫學研究部＿${series}</div>`;
@@ -1247,13 +1415,25 @@ function generateAnn() {
   html += `<div class="ann-title">${topic}</div>`;
   html += `<div class="ann-speaker">${spk}</div></div>`;
   if (abstract) html += `<div class="ann-abstract"><div class="ann-abstract-lbl">演講摘要</div>${abstract}</div>`;
+
   html += '<div class="ann-meta">';
-  html += `<span class="meta-k">時間</span><span class="meta-v">${datetime}</span>`;
-  html += `<span class="meta-k">地點</span><span class="meta-v">${venue}</span>`;
-  if (regurl) html += `<span class="meta-k">報名網址</span><span class="meta-v"><a href="${regurl}" target="_blank">${regurl}</a></span>`;
-  html += `<span class="meta-k">主辦單位</span><span class="meta-v">${org}</span>`;
-  if (contact) html += `<span class="meta-k">承辦人員</span><span class="meta-v">${contact}</span>`;
+  html += `<span class="meta-k">講題：</span><span class="meta-v">${topic}</span>`;
+  html += `<span class="meta-k">講者：</span><span class="meta-v">${speaker}</span>`;
+  if (affil) html += `<span class="meta-k">講者單位：</span><span class="meta-v">${affil}</span>`;
+  html += `<span class="meta-k">時間 ：</span><span class="meta-v">${datetime}${earlyStr}</span>`;
+  html += `<span class="meta-k">地點：</span><span class="meta-v">${venue}</span>`;
+  if (hasCert) html += `<span class="meta-k">時數認證：</span><span class="meta-v">${certStr}</span>`;
+  html += `<span class="meta-k">主辦單位：</span><span class="meta-v">${org}</span>`;
+  if (contact) html += `<span class="meta-k">承辦人員：</span><span class="meta-v">${contact}</span>`;
+  if (regurl) html += `<span class="meta-k">報名網頁：</span><span class="meta-v"><a href="${regurl}" target="_blank">${regurl}</a></span>`;
   html += '</div>';
+
+  // cert reminder note
+  if (hasCert) {
+    html += `<div class="ann-abstract" style="margin-top:14px;border-left-color:var(--gold)"><div class="ann-abstract-lbl" style="color:var(--gold)">注意事項</div>本課程申請時數認證，請攜帶識別證準時刷卡簽退。</div>`;
+  }
+  html += `<div style="font-size:12px;color:var(--ink-muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule-light);font-family:'Noto Sans TC',sans-serif">備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區</div>`;
+
   document.getElementById('ann-doc-body').innerHTML = html;
   document.getElementById('ann-doc').style.display = '';
   document.getElementById('ann-empty').style.display = 'none';
@@ -1261,17 +1441,23 @@ function generateAnn() {
   // ── Plain text ──
   let txt = '';
   if (series) txt += `【台大醫院醫學研究部_${series}】\n\n`;
-  txt += `講題：${topic}\n講者：${spk}\n`;
-  if (abstract) txt += `\n演講摘要：\n${abstract}\n`;
-  txt += `\n時間：${datetime}\n地點：${venue}\n`;
-  if (regurl) txt += `報名網址：${regurl}\n`;
+  txt += `講題：${topic}\n`;
+  txt += `講者：${speaker}\n`;
+  if (affil) txt += `講者單位：${affil}\n`;
+  txt += `時間 ：${datetime}${earlyStr}\n`;
+  txt += `地點：${venue}\n`;
+  if (hasCert) txt += `時數認證：${certStr}\n`;
   txt += `主辦單位：${org}\n`;
   if (contact) txt += `承辦人員：${contact}\n`;
+  if (regurl) txt += `報名網頁：${regurl}\n`;
+  txt += `\n備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區`;
+  if (hasCert) txt += `\n\n※ 本課程申請時數認證，請攜帶識別證準時刷卡簽退。`;
+  if (abstract) txt += `\n\n演講摘要：\n${abstract}`;
   annText = txt.trim();
   document.getElementById('ann-text-out').textContent = annText;
 
   // ── Build reminder emails ──
-  generateReminderEmails({ topic, spk, speaker, affil, datetime, venue, org, contact, regurl, series });
+  generateReminderEmails({ topic, speaker, affil, spk, datetime, venue, org, contact, regurl, series, certStr, hasCert, earlyStr });
 }
 
 /* ══════════════════════════════════
@@ -1357,28 +1543,32 @@ function copyDoc(mod) {
    REMINDER EMAIL GENERATOR
 ══════════════════════════════════ */
 function buildMetaBlock(data) {
-  const { topic, spk, datetime, venue, org, contact, regurl } = data;
+  const { topic, speaker, affil, datetime, venue, org, contact, regurl, certStr, earlyStr } = data;
   let rows = '';
-  rows += `<div class="meta-row"><span class="mk">講題</span><span>${topic}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">講者</span><span>${spk}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">時間</span><span>${datetime}</span></div>`;
-  rows += `<div class="meta-row"><span class="mk">地點</span><span>${venue}</span></div>`;
-  if (org) rows += `<div class="meta-row"><span class="mk">主辦</span><span>${org}</span></div>`;
-  if (contact) rows += `<div class="meta-row"><span class="mk">承辦</span><span>${contact}</span></div>`;
-  if (regurl) rows += `<div class="meta-row"><span class="mk">報名</span><span><a href="${regurl}" style="color:var(--accent)">${regurl}</a></span></div>`;
+  rows += `<div class="meta-row"><span class="mk">講題：</span><span>${topic}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">講者：</span><span>${speaker}</span></div>`;
+  if (affil) rows += `<div class="meta-row"><span class="mk">講者單位：</span><span>${affil}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">時間 ：</span><span>${datetime}${earlyStr||''}</span></div>`;
+  rows += `<div class="meta-row"><span class="mk">地點：</span><span>${venue}</span></div>`;
+  if (certStr) rows += `<div class="meta-row"><span class="mk">時數認證：</span><span>${certStr}</span></div>`;
+  if (org) rows += `<div class="meta-row"><span class="mk">主辦單位：</span><span>${org}</span></div>`;
+  if (contact) rows += `<div class="meta-row"><span class="mk">承辦人員：</span><span>${contact}</span></div>`;
+  if (regurl) rows += `<div class="meta-row"><span class="mk">報名網頁：</span><span><a href="${regurl}" style="color:var(--accent)">${regurl}</a></span></div>`;
   return `<div class="email-meta-block">${rows}</div>`;
 }
 
 function buildMetaText(data) {
-  const { topic, spk, datetime, venue, org, contact, regurl } = data;
+  const { topic, speaker, affil, datetime, venue, org, contact, regurl, certStr, earlyStr } = data;
   let t = '';
   t += `講題：${topic}\n`;
-  t += `講者：${spk}\n`;
-  t += `時間：${datetime}\n`;
+  t += `講者：${speaker}\n`;
+  if (affil) t += `講者單位：${affil}\n`;
+  t += `時間 ：${datetime}${earlyStr||''}\n`;
   t += `地點：${venue}\n`;
+  if (certStr) t += `時數認證：${certStr}\n`;
   if (org) t += `主辦單位：${org}\n`;
   if (contact) t += `承辦人員：${contact}\n`;
-  if (regurl) t += `報名網址：${regurl}\n`;
+  if (regurl) t += `報名網頁：${regurl}\n`;
   return t;
 }
 
@@ -1393,13 +1583,17 @@ function generateReminderEmails(data) {
   const shortTime = datetime.includes(' ') ? datetime.split(' ').slice(1).join(' ') : '';
 
   // ── STUDENT EMAIL ──
+  const { certStr, hasCert, earlyStr } = data;
   const studentSubject = `[學員提醒] ${shortDate} ${shortTime} ${topic}`;
+  const certReminder = hasCert ? `\n※ 本課程申請時數認證，請攜帶識別證準時刷卡簽退。` : '';
   const studentBodyText =
 `各位報名同仁您好：
 
 提醒您已報名以下講座，敬請準時前往參加，如有任何問題也請回信與承辦人聯絡，謝謝您。
 
 ${buildMetaText(data)}
+備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區${certReminder}
+
 敬祝　 研安
 
 ${contact || '醫學研究部 敬上'}`;
@@ -1420,7 +1614,9 @@ ${contact || '醫學研究部 敬上'}`;
 提醒您已報名以下講座，敬請準時前往參加，如有任何問題也請回信與承辦人聯絡，謝謝您。
 </div>
       ${buildMetaBlock(data)}
-      <div class="email-body">敬祝　 研安
+      <div class="email-body">備註：課程錄影將於演講結束後1周內公告於報名網頁的錄影專區${hasCert ? `\n\n<strong>※ 本課程申請時數認證，請攜帶識別證準時刷卡簽退。</strong>` : ''}
+
+敬祝　 研安
 
 ${contact || '醫學研究部 敬上'}</div>
     </div>
@@ -1431,8 +1627,9 @@ ${contact || '醫學研究部 敬上'}</div>
   // ── SPEAKER EMAIL ──
   const speakerSubject = `[講師提醒] ${shortDate} ${shortTime} ${topic}`;
   const noteLines = [
+    `敬請提供簡單的個人簡介，將由講座主持長官開場介紹。`,
     `當天${contact ? contact.replace(/醫學研究部\s?/, '') : sender}會提早半小時至${venue}進行前置作業，如您有準備PPT也可提前寄給我或提早至講堂測試投影片。`,
-    `因該講堂設備關係建議使用現場講桌電腦播放。`,
+    `講堂設備僅提供HDMI接頭，如為APPLE Mac系統本部備有轉接頭，因該講堂設備關係建議使用現場講桌電腦播放。`,
     `本院將準備微薄的講座鐘點費感謝您受邀前來，敬請攜帶收款存摺影本，當天會請您簽收鐘點費與錄影授權書，鐘點費後續將由本院出納組撥款。`
   ];
 
@@ -1446,6 +1643,7 @@ ${buildMetaText(data)}
 1. ${noteLines[0]}
 2. ${noteLines[1]}
 3. ${noteLines[2]}
+4. ${noteLines[3]}
 
 我們非常期待您的演講分享，如期間有任何問題或需要提供協助的部分也請隨時與${sender}聯繫，謝謝您！${senderContact ? '\n' + senderContact : ''}`;
 
@@ -1469,7 +1667,8 @@ ${buildMetaText(data)}
         <div style="line-height:1.9">
           1. ${noteLines[0]}<br>
           2. ${noteLines[1]}<br>
-          3. ${noteLines[2]}
+          3. ${noteLines[2]}<br>
+          4. ${noteLines[3]}
         </div>
       </div>
       <div class="email-body">我們非常期待您的演講分享，如期間有任何問題或需要提供協助的部分也請隨時與<strong>${sender}</strong>聯繫，謝謝您！${senderContact ? `\n${senderContact}` : ''}</div>
@@ -1490,9 +1689,71 @@ function switchItab(mode) {
 }
 
 // listen on sign-in fields
-['s-title','s-date','s-venue'].forEach(id => {
+['s-title','s-date'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderSheet);
 });
+
+/* ── Venue dropdown helpers ── */
+function handleVenueSel(selId, customId, hiddenId) {
+  const sel = document.getElementById(selId);
+  const custom = document.getElementById(customId);
+  const hidden = document.getElementById(hiddenId);
+  if (sel.value === '__custom__') {
+    custom.style.display = '';
+    hidden.value = custom.value;
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value;
+  }
+}
+function syncVenue(customId, hiddenId) {
+  document.getElementById(hiddenId).value = document.getElementById(customId).value;
+}
+
+/* ── Series dropdown helper ── */
+function handleSeriesSel(selId, customId, hiddenId) {
+  const sel = document.getElementById(selId);
+  const custom = document.getElementById(customId);
+  const hidden = document.getElementById(hiddenId);
+  if (sel.value === '__custom__') {
+    custom.style.display = '';
+    hidden.value = custom.value;
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value;
+  }
+}
+
+/* ── Generic dropdown+custom helper ── */
+function handleDropdownCustom(selId, customId, hiddenId) {
+  const sel = document.getElementById(selId);
+  const custom = document.getElementById(customId);
+  const hidden = document.getElementById(hiddenId);
+  if (sel.value === '__custom__') {
+    custom.style.display = '';
+    hidden.value = custom.value;
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel.value;
+  }
+}
+
+/* ── Staff checkbox builder ── */
+function updateStaff() {
+  const checked = [...document.querySelectorAll('#staff-checks input:checked')].map(cb => cb.value);
+  const extra = document.getElementById('p-staff-custom')?.value.trim() || '';
+  const all = extra ? [...checked, extra] : checked;
+  document.getElementById('p-staff').value = all.join('、');
+}
+
+/* ── Time: subtract 30 min for early check-in ── */
+function subtractHalfHour(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const total = h * 60 + m - 30;
+  const nh = Math.floor(total / 60), nm = total % 60;
+  return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`;
+}
 document.getElementById('s-bulk').addEventListener('input', () => {
   const txt = document.getElementById('s-bulk').value;
   const { results, errors } = parseBulk(txt);
@@ -1558,7 +1819,37 @@ function clearAll() {
   persons=[]; renderPersonList(); renderSheet();
 }
 
+/* ══════════════════════════════════
+   SORT STATE
+══════════════════════════════════ */
+let sortMode = 'unit'; // 'unit' | 'name' | 'manual'
+let manualOrder = [];
+
+function setSort(mode, el) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (mode === 'manual') {
+    manualOrder = sortedPersons().map(p => p.id);
+  }
+  renderPersonList();
+  renderSheet();
+}
+
 function sortedPersons() {
+  if (sortMode === 'name') {
+    return [...persons].sort((a,b) => a.name.localeCompare(b.name,'zh-TW'));
+  }
+  if (sortMode === 'manual') {
+    if (!manualOrder.length) return [...persons];
+    const idMap = {};
+    persons.forEach(p => { idMap[p.id] = p; });
+    const ordered = manualOrder.map(id => idMap[id]).filter(Boolean);
+    const inOrder = new Set(manualOrder);
+    persons.forEach(p => { if (!inOrder.has(p.id)) ordered.push(p); });
+    return ordered;
+  }
+  // Default: unit → name
   return [...persons].sort((a,b) => {
     const uc = a.unit.localeCompare(b.unit,'zh-TW');
     return uc!==0 ? uc : a.name.localeCompare(b.name,'zh-TW');
@@ -1573,14 +1864,56 @@ function renderPersonList() {
   document.getElementById('pl-count').textContent = `共 ${persons.length} 位`;
   const nameCounts={};
   persons.forEach(p => { nameCounts[p.name]=(nameCounts[p.name]||0)+1; });
-  list.innerHTML = persons.map(p => `
-    <div class="ptag${nameCounts[p.name]>1?' dup':''}">
-      <div class="ptag-info">
+  const sorted = sortedPersons();
+  const isDraggable = sortMode === 'manual';
+  list.innerHTML = sorted.map(p => `
+    <div class="ptag${nameCounts[p.name]>1?' dup':''}" data-id="${p.id}"
+      ${isDraggable ? 'draggable="true"' : ''}>
+      ${isDraggable ? '<span class="ptag-drag-handle" title="拖曳調整順序">⠿</span>' : ''}
+      <div class="ptag-info" style="flex:1">
         <span class="ptag-name">${p.name}${nameCounts[p.name]>1?'<span class="dup-badge">重複</span>':''}</span>
         <span class="ptag-unit">${p.unit}</span>
       </div>
       <button class="ptag-rm" onclick="removePerson(${p.id})">✕</button>
     </div>`).join('');
+  if (isDraggable) initDragSort(list);
+}
+
+/* ── Drag-to-sort ── */
+let dragSrcId = null;
+
+function initDragSort(list) {
+  list.querySelectorAll('.ptag').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragSrcId = parseInt(el.dataset.id);
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      list.querySelectorAll('.ptag').forEach(t => t.classList.remove('drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      list.querySelectorAll('.ptag').forEach(t => t.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetId = parseInt(el.dataset.id);
+      if (dragSrcId === targetId) return;
+      const cur = sortedPersons().map(p => p.id);
+      const fromIdx = cur.indexOf(dragSrcId);
+      const toIdx = cur.indexOf(targetId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      cur.splice(fromIdx, 1);
+      cur.splice(toIdx, 0, dragSrcId);
+      manualOrder = cur;
+      renderPersonList();
+      renderSheet();
+    });
+  });
 }
 
 /* ══════════════════════════════════
@@ -1621,21 +1954,27 @@ function renderSheet() {
 
   document.getElementById('sheet-output').innerHTML = `
     <div class="sheet-wrap">
-      <div class="sheet-hdr">
-        <div class="sheet-title-txt">${title}</div>
-        <div class="sheet-subtitle-txt">National Taiwan University Hospital · Department of Medical Research</div>
-      </div>
-      <div class="sheet-meta-bar">
-        <div class="sm-item"><span class="sm-lbl">日期</span>${dateStr}</div>
-        <div class="sm-item"><span class="sm-lbl">地點</span>${location}</div>
-        <div class="sm-item"><span class="sm-lbl">人數</span>${persons.length} 人</div>
-        ${catHTML}
-      </div>
-      <div class="sheet-tbl-wrap">
+      <div class="sheet-tbl-wrap" style="padding:0">
         <table class="sheet-tbl">
-          <thead><tr>
-            <th style="width:40px">編號</th><th>姓名</th><th>單位</th><th>簽名</th>
-          </tr></thead>
+          <thead>
+            <tr class="sheet-hdr-row">
+              <td colspan="4" style="padding:0">
+                <div class="sheet-hdr">
+                  <div class="sheet-title-txt">${title}</div>
+                  <div class="sheet-subtitle-txt">National Taiwan University Hospital · Department of Medical Research</div>
+                </div>
+                <div class="sheet-meta-bar">
+                  <div class="sm-item"><span class="sm-lbl">日期</span>${dateStr}</div>
+                  <div class="sm-item"><span class="sm-lbl">地點</span>${location}</div>
+                  <div class="sm-item"><span class="sm-lbl">人數</span>${persons.length} 人</div>
+                  ${catHTML}
+                </div>
+              </td>
+            </tr>
+            <tr class="sheet-col-hdr">
+              <th style="width:40px">編號</th><th>姓名</th><th>單位</th><th>簽名</th>
+            </tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
