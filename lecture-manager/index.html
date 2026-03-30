@@ -451,6 +451,14 @@ tr.selected { background: var(--amber-l) !important; }
           <label class="form-label">演講摘要</label>
           <textarea class="form-input" id="f-abstract" rows="4" placeholder="（選填）輸入演講摘要..." style="resize:vertical;min-height:80px;"></textarea>
         </div>
+        <div>
+          <label class="form-label">TMS 課號</label>
+          <input type="text" class="form-input" id="f-courseno" placeholder="例：200332">
+        </div>
+        <div>
+          <label class="form-label">錄影網址</label>
+          <input type="url" class="form-input" id="f-videourl" placeholder="https://edu.ntuh.gov.tw/course/…">
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn-primary" id="saveBtn" onclick="saveRecord()">✅ 新增建檔</button>
@@ -884,6 +892,8 @@ function resetForm() {
   document.getElementById('f-location').value = '';
   document.getElementById('f-attendees').value = '';
   document.getElementById('f-abstract').value = '';
+  document.getElementById('f-courseno').value = '';
+  document.getElementById('f-videourl').value = '';
 }
 
 // datetime-local → "YYYY.MM.DD HH:mm"
@@ -934,6 +944,8 @@ function editRecord(rowIndex) {
   document.getElementById('f-location').value = rec.location || '';
   document.getElementById('f-attendees').value = rec.attendees || '';
   document.getElementById('f-abstract').value = rec.abstract || '';
+  document.getElementById('f-courseno').value = rec.courseno || '';
+  document.getElementById('f-videourl').value = rec.videourl || '';
   
   switchView('form');
 }
@@ -958,6 +970,8 @@ async function saveRecord() {
     location: document.getElementById('f-location').value.trim(),
     attendees: document.getElementById('f-attendees').value || '',
     abstract: document.getElementById('f-abstract').value.trim(),
+    courseno: document.getElementById('f-courseno').value.trim(),
+    videourl: document.getElementById('f-videourl').value.trim(),
   };
   
   const btn = document.getElementById('saveBtn');
@@ -1247,6 +1261,8 @@ function viewDetail(rowIndex) {
   html += '<span class="mk">講師</span><span class="mv">' + esc(rec.speaker) + (rec.unit ? '（' + esc(rec.unit) + '）' : '') + '</span>';
   html += '<span class="mk">地點</span><span class="mv">' + esc(rec.location || '—') + '</span>';
   html += '<span class="mk">人數</span><span class="mv">' + (rec.attendees || '—') + '</span>';
+  if (rec.courseno) html += '<span class="mk">TMS 課號</span><span class="mv">' + esc(rec.courseno) + '</span>';
+  if (rec.videourl) html += '<span class="mk">錄影網址</span><span class="mv"><a href="' + esc(rec.videourl) + '" target="_blank" style="color:var(--terra);text-decoration:none;border-bottom:1px dashed var(--terra);">' + esc(rec.videourl) + ' ↗</a></span>';
   html += '</div>';
   
   if (rec.abstract) {
@@ -1368,7 +1384,10 @@ function genDoc(type) {
     t += '講者：' + spk + '\n';
     t += '時間：' + rocDate + (time ? ' ' + time : '') + '\n';
     t += '地點：' + (r.location || '') + '\n';
-    t += '出席人數：' + (r.attendees || '___') + ' 人\n\n';
+    t += '出席人數：' + (r.attendees || '___') + ' 人\n';
+    if (r.courseno) t += 'TMS 課號：' + r.courseno + '\n';
+    if (r.videourl) t += '錄影連結：' + r.videourl + '\n';
+    t += '\n';
     if (r.abstract) t += '演講摘要：\n' + r.abstract + '\n\n';
     t += '━━━━━━━━━━━━━━━━\n';
     t += '主辦單位：醫學研究部\n';
