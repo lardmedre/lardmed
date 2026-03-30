@@ -273,6 +273,23 @@ tr.selected { background: var(--amber-l) !important; }
 .batch-check input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--terra); cursor: pointer; }
 .batch-check span { user-select: none; }
 
+/* ── Detail view ── */
+.dtool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.dtool-card {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1px solid var(--warm100); border-radius: var(--radius);
+  padding: 16px 18px; cursor: pointer; transition: all 0.18s;
+  text-align: left; font-family: inherit;
+}
+.dtool-card:hover { border-color: var(--terra); box-shadow: 0 3px 12px rgba(196,93,62,0.08); transform: translateY(-1px); }
+.dtool-icon { font-size: 26px; flex-shrink: 0; }
+.dtool-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.dtool-desc { font-size: 11px; color: var(--ink40); }
+.detail-meta { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 13px; margin-top: 16px; }
+.detail-meta .mk { color: var(--ink40); font-weight: 600; white-space: nowrap; }
+.detail-meta .mv { color: var(--ink); }
+.detail-abstract { background: var(--sand); border-left: 3px solid var(--terra); padding: 14px 18px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.8; color: var(--ink60); white-space: pre-wrap; }
+
 /* ── Tools grid ── */
 .tools-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
@@ -316,6 +333,7 @@ tr.selected { background: var(--amber-l) !important; }
   .form-grid { grid-template-columns: 1fr; }
   .charts-grid { grid-template-columns: 1fr; }
   .tools-grid { grid-template-columns: 1fr; }
+  .dtool-grid { grid-template-columns: 1fr; }
   .stat-row { flex-direction: column; }
   .filter-input { width: 100%; }
   .header-inner { flex-direction: column; align-items: flex-start; }
@@ -429,6 +447,10 @@ tr.selected { background: var(--amber-l) !important; }
           <label class="form-label">報名參加人數</label>
           <input type="number" class="form-input" id="f-attendees" placeholder="（選填）">
         </div>
+        <div class="full">
+          <label class="form-label">演講摘要</label>
+          <textarea class="form-input" id="f-abstract" rows="4" placeholder="（選填）輸入演講摘要..." style="resize:vertical;min-height:80px;"></textarea>
+        </div>
       </div>
       <div class="form-actions">
         <button class="btn-primary" id="saveBtn" onclick="saveRecord()">✅ 新增建檔</button>
@@ -500,9 +522,36 @@ tr.selected { background: var(--amber-l) !important; }
       </a>
     </div>
   </div>
-</div>
 
-<!-- ═══════ FOOTER ═══════ -->
+  <!-- ═══════ DETAIL VIEW ═══════ -->
+  <div id="view-detail" style="display:none;">
+    <div style="margin-bottom:16px;">
+      <button class="btn-secondary" onclick="switchView('list')" style="padding:7px 16px;font-size:13px;">← 返回列表</button>
+    </div>
+    <div class="card" style="padding:28px;margin-bottom:16px;" id="detailHeader"></div>
+    <div style="margin-bottom:16px;">
+      <h3 style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px;">📄 快速產出文件</h3>
+      <div class="dtool-grid">
+        <button class="dtool-card" onclick="genDoc('ann')"><div class="dtool-icon">📢</div><div><div class="dtool-name">演講公告</div><div class="dtool-desc">格式化公告文件</div></div></button>
+        <button class="dtool-card" onclick="genDoc('plain')"><div class="dtool-icon">📋</div><div><div class="dtool-name">純文字公告</div><div class="dtool-desc">可貼 LINE / Email</div></div></button>
+        <button class="dtool-card" onclick="genDoc('student')"><div class="dtool-icon">✉️</div><div><div class="dtool-name">學員提醒信</div><div class="dtool-desc">寄給報名學員</div></div></button>
+        <button class="dtool-card" onclick="genDoc('speaker')"><div class="dtool-icon">🎤</div><div><div class="dtool-name">講師提醒信</div><div class="dtool-desc">寄給講師確認</div></div></button>
+        <button class="dtool-card" onclick="genDoc('post')"><div class="dtool-icon">📝</div><div><div class="dtool-name">會後紀錄</div><div class="dtool-desc">會後紀錄文件</div></div></button>
+        <button class="dtool-card" onclick="openToolsPage()"><div class="dtool-icon">✍️</div><div><div class="dtool-name">簽到表 / 桌牌</div><div class="dtool-desc">開啟工具頁帶入資訊</div></div></button>
+      </div>
+    </div>
+    <div class="card" id="detailOutput" style="display:none;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 style="font-size:14px;font-weight:700;color:var(--ink);margin:0;" id="detailOutputTitle"></h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-export" onclick="copyOutput()" id="detailCopyBtn">📋 複製</button>
+          <button class="btn-secondary" onclick="document.getElementById('detailOutput').style.display='none'" style="padding:6px 12px;font-size:12px;">✕</button>
+        </div>
+      </div>
+      <div id="detailOutputBody" style="background:var(--sand);border:1px solid var(--warm100);border-radius:8px;padding:24px;line-height:1.9;font-size:13px;white-space:pre-wrap;max-height:600px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
 <footer class="site-footer">
   <div>© 2026 台大醫院 醫學研究部 All rights reserved.</div>
   <div class="credit">系統建置：醫學研究部 陳巧瑜管理師</div>
@@ -674,7 +723,7 @@ function hideStatus() {
 
 // ── View switching ──
 function switchView(name) {
-  ['list','form','report','tools'].forEach(v => {
+  ['list','form','report','tools','detail'].forEach(v => {
     document.getElementById('view-' + v).style.display = v === name ? '' : 'none';
   });
   document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
@@ -797,13 +846,14 @@ function renderTable() {
       '<td class="cell-date">' + esc(r.date) + '</td>' +
       '<td><span class="badge" style="background:' + color + '">' + esc(r.category) + '</span></td>' +
       '<td class="type-tag">' + emoji + ' ' + esc(r.type) + '</td>' +
-      '<td class="cell-title" title="' + esc(r.title) + '">' + esc(r.title) + '</td>' +
+      '<td class="cell-title" title="' + esc(r.title) + '" style="cursor:pointer;" onclick="viewDetail(' + r.rowIndex + ')">' + esc(r.title) + '</td>' +
       '<td class="cell-speaker">' + esc(r.speaker) + '</td>' +
       '<td class="cell-unit">' + esc(r.unit) + '</td>' +
       '<td class="cell-intl ' + intlClass + '">' + intlText + '</td>' +
       '<td class="cell-loc">' + esc(r.location) + '</td>' +
       '<td class="cell-num' + attClass + '">' + (att || '—') + '</td>' +
       '<td class="cell-actions">' +
+        '<button class="act-btn" title="詳情" onclick="viewDetail(' + r.rowIndex + ')">🔍</button>' +
         '<button class="act-btn" title="編輯" onclick="editRecord(' + r.rowIndex + ')">✏️</button>' +
         '<button class="act-btn del" title="刪除" onclick="deleteRecord(' + r.rowIndex + ')">🗑️</button>' +
       '</td>' +
@@ -833,6 +883,7 @@ function resetForm() {
   document.getElementById('f-intl').value = '';
   document.getElementById('f-location').value = '';
   document.getElementById('f-attendees').value = '';
+  document.getElementById('f-abstract').value = '';
 }
 
 // datetime-local → "YYYY.MM.DD HH:mm"
@@ -882,6 +933,7 @@ function editRecord(rowIndex) {
   document.getElementById('f-intl').value = rec.intl || '';
   document.getElementById('f-location').value = rec.location || '';
   document.getElementById('f-attendees').value = rec.attendees || '';
+  document.getElementById('f-abstract').value = rec.abstract || '';
   
   switchView('form');
 }
@@ -905,6 +957,7 @@ async function saveRecord() {
     intl: document.getElementById('f-intl').value,
     location: document.getElementById('f-location').value.trim(),
     attendees: document.getElementById('f-attendees').value || '',
+    abstract: document.getElementById('f-abstract').value.trim(),
   };
   
   const btn = document.getElementById('saveBtn');
@@ -1162,6 +1215,181 @@ async function saveSettings() {
     buildFormSelects();
     closeSettings();
   }
+}
+
+// ── Detail View ──
+let detailRec = null;
+let detailOutputText = '';
+
+function viewDetail(rowIndex) {
+  const rec = records.find(r => r.rowIndex === rowIndex);
+  if (!rec) return;
+  detailRec = rec;
+  
+  const color = CAT_COLORS[rec.category] || '#6b5f54';
+  const emoji = TYPE_EMOJI[rec.type] || '📌';
+  
+  let html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">';
+  html += '<div style="flex:1;min-width:200px;">';
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">';
+  html += '<span class="badge" style="background:' + color + '">' + esc(rec.category) + '</span>';
+  html += '<span class="type-tag">' + emoji + ' ' + esc(rec.type) + '</span>';
+  if (rec.intl) html += '<span class="cell-intl ' + (rec.intl==='國際'?'intl':'domestic') + '">' + (rec.intl==='國際'?'🌍 國際':'🏠 國內') + '</span>';
+  html += '</div>';
+  html += '<h2 style="font-size:18px;font-weight:700;color:var(--ink);margin-bottom:4px;line-height:1.5;">' + esc(rec.title) + '</h2>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+  html += '<button class="btn-primary" style="padding:8px 16px;font-size:12px;" onclick="editRecord(' + rec.rowIndex + ')">✏️ 編輯</button>';
+  html += '</div></div>';
+  
+  html += '<div class="detail-meta">';
+  html += '<span class="mk">日期</span><span class="mv">' + esc(rec.date) + '</span>';
+  html += '<span class="mk">講師</span><span class="mv">' + esc(rec.speaker) + (rec.unit ? '（' + esc(rec.unit) + '）' : '') + '</span>';
+  html += '<span class="mk">地點</span><span class="mv">' + esc(rec.location || '—') + '</span>';
+  html += '<span class="mk">人數</span><span class="mv">' + (rec.attendees || '—') + '</span>';
+  html += '</div>';
+  
+  if (rec.abstract) {
+    html += '<div style="margin-top:16px;"><div style="font-size:11px;font-weight:600;color:var(--terra);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">演講摘要</div>';
+    html += '<div class="detail-abstract">' + esc(rec.abstract) + '</div></div>';
+  }
+  
+  document.getElementById('detailHeader').innerHTML = html;
+  document.getElementById('detailOutput').style.display = 'none';
+  switchView('detail');
+}
+
+function fmtROC(dateStr) {
+  if (!dateStr) return '';
+  const clean = String(dateStr).trim();
+  const m = clean.match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+  if (!m) return dateStr;
+  const y = parseInt(m[1]) - 1911;
+  const d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+  const wd = ['日','一','二','三','四','五','六'][d.getDay()];
+  return y + '年' + parseInt(m[2]) + '月' + parseInt(m[3]) + '日（' + wd + '）';
+}
+
+function fmtTime(dateStr) {
+  if (!dateStr) return '';
+  const parts = String(dateStr).trim().split(/[\s]+/);
+  return parts[1] || '';
+}
+
+function showOutput(title, text) {
+  detailOutputText = text;
+  document.getElementById('detailOutputTitle').textContent = title;
+  document.getElementById('detailOutputBody').textContent = text;
+  document.getElementById('detailOutput').style.display = '';
+  document.getElementById('detailCopyBtn').textContent = '📋 複製';
+  document.getElementById('detailOutput').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyOutput() {
+  if (!detailOutputText) return;
+  navigator.clipboard.writeText(detailOutputText).then(() => {
+    document.getElementById('detailCopyBtn').textContent = '✓ 已複製';
+    setTimeout(() => document.getElementById('detailCopyBtn').textContent = '📋 複製', 2000);
+  });
+}
+
+function genDoc(type) {
+  if (!detailRec) return;
+  const r = detailRec;
+  const rocDate = fmtROC(r.date);
+  const time = fmtTime(r.date);
+  const spk = r.unit ? r.unit + ' ' + r.speaker : r.speaker;
+  
+  if (type === 'ann') {
+    let t = '【演講公告】\n\n';
+    t += '台大醫院醫學研究部 ' + (r.category || '學術演講') + '\n';
+    t += '━━━━━━━━━━━━━━━━\n\n';
+    t += '📌 講題：' + r.title + '\n';
+    t += '🎤 講者：' + spk + '\n';
+    t += '📅 時間：' + rocDate + (time ? ' ' + time : '') + '\n';
+    t += '📍 地點：' + (r.location || '待定') + '\n';
+    if (r.abstract) t += '\n📝 演講摘要：\n' + r.abstract + '\n';
+    t += '\n主辦單位：醫學研究部\n';
+    t += '━━━━━━━━━━━━━━━━\n';
+    t += '歡迎有興趣的同仁踴躍參加！';
+    showOutput('📢 演講公告', t);
+  }
+  
+  else if (type === 'plain') {
+    let t = '台大醫院醫學研究部' + (r.category || '學術演講') + '\n\n';
+    t += '講題：' + r.title + '\n';
+    t += '講者：' + spk + '\n';
+    t += '時間：' + rocDate + (time ? ' ' + time : '') + '\n';
+    t += '地點：' + (r.location || '待定') + '\n';
+    if (r.abstract) t += '\n演講摘要：\n' + r.abstract + '\n';
+    t += '\n主辦單位：醫學研究部\n歡迎踴躍參加！';
+    showOutput('📋 純文字公告', t);
+  }
+  
+  else if (type === 'student') {
+    let t = '主旨：【提醒】' + r.title + ' 演講提醒\n\n';
+    t += '各位同仁好，\n\n';
+    t += '提醒您已報名以下演講活動，敬請準時出席：\n\n';
+    t += '　📌 講題：' + r.title + '\n';
+    t += '　🎤 講者：' + spk + '\n';
+    t += '　📅 時間：' + rocDate + (time ? ' ' + time : '') + '\n';
+    t += '　📍 地點：' + (r.location || '待定') + '\n\n';
+    t += '⚙️ 場地設備說明：\n';
+    t += '　・投影設備僅提供 HDMI 連接\n';
+    t += '　・如使用 Mac 筆電，現場備有轉接頭\n';
+    t += '　・建議提前 10 分鐘到場測試設備\n\n';
+    t += '如有任何問題，請聯繫醫學研究部。\n\n';
+    t += '醫學研究部 敬上';
+    showOutput('✉️ 學員提醒信', t);
+  }
+  
+  else if (type === 'speaker') {
+    let t = '主旨：【演講確認】' + r.title + '\n\n';
+    t += (r.speaker || '教授') + '您好，\n\n';
+    t += '感謝您應允蒞臨本部演講，以下為活動資訊確認：\n\n';
+    t += '　📌 講題：' + r.title + '\n';
+    t += '　📅 時間：' + rocDate + (time ? ' ' + time : '') + '\n';
+    t += '　📍 地點：' + (r.location || '待定') + '\n\n';
+    t += '⚙️ 場地設備說明：\n';
+    t += '　・投影設備僅提供 HDMI 連接\n';
+    t += '　・如使用 Mac 筆電，現場備有轉接頭\n';
+    t += '　・建議演講前 15 分鐘到場測試設備\n\n';
+    t += '如需調整或有其他需求，請隨時告知。\n';
+    t += '期待您的蒞臨！\n\n';
+    t += '醫學研究部 敬上';
+    showOutput('🎤 講師提醒信', t);
+  }
+  
+  else if (type === 'post') {
+    let t = '【會後紀錄】\n\n';
+    t += '台大醫院醫學研究部 ' + (r.category || '學術演講') + ' 會後紀錄\n';
+    t += '━━━━━━━━━━━━━━━━\n\n';
+    t += '講題：' + r.title + '\n';
+    t += '講者：' + spk + '\n';
+    t += '時間：' + rocDate + (time ? ' ' + time : '') + '\n';
+    t += '地點：' + (r.location || '') + '\n';
+    t += '出席人數：' + (r.attendees || '___') + ' 人\n\n';
+    if (r.abstract) t += '演講摘要：\n' + r.abstract + '\n\n';
+    t += '━━━━━━━━━━━━━━━━\n';
+    t += '主辦單位：醫學研究部\n';
+    t += '紀錄人員：\n';
+    t += '紀錄日期：\n';
+    showOutput('📝 會後紀錄', t);
+  }
+}
+
+function openToolsPage() {
+  if (!detailRec) { window.open('tools.html', '_blank'); return; }
+  const r = detailRec;
+  const params = new URLSearchParams({
+    title: r.title || '',
+    speaker: r.speaker || '',
+    unit: r.unit || '',
+    date: r.date ? String(r.date).split(/[\s]/)[0].replace(/\./g, '-') : '',
+    location: r.location || '',
+    abstract: r.abstract || '',
+  });
+  window.open('tools.html?' + params.toString(), '_blank');
 }
 
 // ── Batch Edit ──

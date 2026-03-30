@@ -2217,6 +2217,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('s-date').value = today;
   renderSheet();
+  
+  // Auto-fill from URL params (from management system detail page)
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('title') || params.has('speaker')) {
+    const title = params.get('title') || '';
+    const speaker = params.get('speaker') || '';
+    const unit = params.get('unit') || '';
+    const date = params.get('date') || '';
+    const location = params.get('location') || '';
+    const abstract = params.get('abstract') || '';
+    
+    // Fill announcement sidebar
+    const aT = document.getElementById('a-topic'); if (aT) aT.value = title;
+    const aS = document.getElementById('a-speaker'); if (aS) aS.value = speaker;
+    const aA = document.getElementById('a-affil'); if (aA) aA.value = unit;
+    const aD = document.getElementById('a-date'); if (aD && date) aD.value = date;
+    const aV = document.getElementById('a-venue'); if (aV) aV.value = location;
+    const aAb = document.getElementById('a-abstract'); if (aAb) aAb.value = abstract;
+    
+    // Fill post-event sidebar
+    const pT = document.getElementById('p-topic'); if (pT) pT.value = title;
+    const pS = document.getElementById('p-speaker'); if (pS) pS.value = speaker;
+    const pA = document.getElementById('p-affil'); if (pA) pA.value = unit;
+    const pD = document.getElementById('p-date'); if (pD && date) pD.value = date;
+    const pV = document.getElementById('p-venue'); if (pV) pV.value = location;
+    
+    // Fill sign-in sidebar
+    const sD = document.getElementById('s-date'); if (sD && date) sD.value = date;
+    const sV = document.getElementById('s-venue'); if (sV) sV.value = location;
+    
+    showToast('已從管理系統帶入演講資訊');
+  }
 });
 </script>
 
